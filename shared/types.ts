@@ -52,3 +52,11 @@ export interface Selection {
   window: 'month' | 't12';
   country: string | null;
 }
+
+export const PRODUCT_GROUPS: ProductGroup[] = [
+  'plate_sheet',
+  'bar_rod_profiles',
+  'unwrought',
+  'tube',
+  'foil',
+];
