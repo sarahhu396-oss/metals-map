@@ -121,7 +121,8 @@ export function mountPanel(el: HTMLElement, store: Store, ds: Dataset): void {
       h('header', {},
         h('h1', {}, 'US aluminum trade'),
         h('p', { class: 'subhead' }, heading(sel))),
-      ...(sel.country === null ? overview(ds, sel, store) : country(ds, sel, store, sel.country)),
+      ...(sel.country === null ? overview(ds, sel, store) : country(ds, sel, store, sel.country))
+        .filter((n): n is Node => n !== false),
       h('footer', {},
         h('p', {}, `Data through ${formatMonth(ds.meta.latestMonth)}. ${ds.meta.source}`),
         ds.events.length > 0 && h('details', {},
