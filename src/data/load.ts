@@ -1,4 +1,4 @@
-import type { Country, Flow, Meta, TariffEvent } from '../../shared/types';
+import { PRODUCT_GROUPS, type Country, type Flow, type Meta, type TariffEvent } from '../../shared/types';
 
 export interface Dataset {
   flows: Flow[];
@@ -25,12 +25,14 @@ async function getJson<T>(base: string, file: string): Promise<T> {
 }
 
 export async function loadDataset(base = 'data/'): Promise<Dataset> {
-  const [flows, countries, meta, events] = await Promise.all([
-    getJson<Flow[]>(base, 'flows.json'),
+  // Flows are split into one file per product group to keep each file small.
+  const [flowParts, countries, meta, events] = await Promise.all([
+    Promise.all(PRODUCT_GROUPS.map((g) => getJson<Flow[]>(base, `flows-${g}.json`))),
     getJson<Country[]>(base, 'countries.json'),
     getJson<Meta>(base, 'meta.json'),
     getJson<TariffEvent[]>(base, 'tariff-events.json'),
   ]);
+  const flows = flowParts.flat();
   const months = [...new Set(flows.map((f) => f.month))].sort();
   return {
     flows,

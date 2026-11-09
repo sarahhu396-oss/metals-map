@@ -78,7 +78,7 @@ test('a single month before a year of history still works; trailing 12 clamps', 
 });
 
 test('a data file that fails to load is named in the error', async ({ page }) => {
-  await serveFixtures(page, { fail: 'flows.json' });
+  await serveFixtures(page, { fail: 'flows-plate.json' });
   await page.goto('/');
-  await expect(page.getByRole('alert')).toContainText('flows.json');
+  await expect(page.getByRole('alert')).toContainText('flows-plate.json');
 });

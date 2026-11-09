@@ -8,7 +8,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Country, Direction, Flow, Meta } from '../shared/types';
+import { PRODUCT_GROUPS, type Country, type Direction, type Flow, type Meta } from '../shared/types';
 import { parseResponse, type RawRow } from './census';
 import { fetchRange } from './fetch';
 import { transform, type GroupMap } from './transform';
@@ -58,8 +58,8 @@ async function main(): Promise<number> {
   const countries = reference.filter((c) => present.has(c.code));
   const latestMonth = flows.map((f) => f.month).sort().at(-1) ?? '';
 
-  const prevPath = join(OUT, 'flows.json');
-  const prev = existsSync(prevPath) ? readJson<Flow[]>(prevPath) : null;
+  const prevFiles = PRODUCT_GROUPS.map((g) => join(OUT, `flows-${g}.json`)).filter((p) => existsSync(p));
+  const prev = prevFiles.length ? prevFiles.flatMap((p) => readJson<Flow[]>(p)) : null;
   const problems: Problem[] = validate({ flows, unmapped, countries: reference }, prev);
   if (existsSync(join(OUT, 'meta.json'))) {
     const prevMeta = readJson<Meta>(join(OUT, 'meta.json'));
@@ -76,23 +76,26 @@ async function main(): Promise<number> {
   }
 
   const meta: Meta = { latestMonth, fetchedAt: new Date().toISOString(), source: SOURCE };
-  const files: Record<string, unknown> = { 'flows.json': flows, 'countries.json': countries, 'meta.json': meta };
+  // One flows file per group keeps each under a few MB.
+  const files: Record<string, unknown> = { 'countries.json': countries, 'meta.json': meta };
+  for (const g of PRODUCT_GROUPS) files[`flows-${g}.json`] = flows.filter((f) => f.group === g);
   const tmp = join(ROOT, 'public/.data-tmp');
   rmSync(tmp, { recursive: true, force: true });
   mkdirSync(tmp, { recursive: true });
   mkdirSync(OUT, { recursive: true });
   for (const [name, data] of Object.entries(files)) {
     // flows: one object per line keeps git diffs readable; others pretty-printed.
-    const text = name === 'flows.json'
-      ? `[\n${flows.map((f) => JSON.stringify(f)).join(',\n')}\n]\n`
+    const text = name.startsWith('flows-')
+      ? `[\n${(data as Flow[]).map((f) => JSON.stringify(f)).join(',\n')}\n]\n`
       : `${JSON.stringify(data, null, 1)}\n`;
     writeFileSync(join(tmp, name), text);
   }
   for (const name of Object.keys(files)) renameSync(join(tmp, name), join(OUT, name));
   rmSync(tmp, { recursive: true, force: true });
 
-  const mb = statSync(prevPath).size / 1e6;
-  console.log(`wrote ${flows.length} flows, ${countries.length} countries, latest ${latestMonth}; flows.json ${mb.toFixed(2)} MB`);
+  rmSync(join(OUT, 'flows.json'), { force: true }); // pre-split layout
+  const mb = PRODUCT_GROUPS.map((g) => statSync(join(OUT, `flows-${g}.json`)).size / 1e6);
+  console.log(`wrote ${flows.length} flows, ${countries.length} countries, latest ${latestMonth}; largest flows file ${Math.max(...mb).toFixed(2)} MB`);
   return 0;
 }
 

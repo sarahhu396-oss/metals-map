@@ -266,15 +266,20 @@ describe('loadDataset', () => {
 
   test('names the file that failed to load', async () => {
     vi.stubGlobal('fetch', async (url: string) =>
-      url.includes('flows.json')
+      url.includes('flows-sheet.json')
         ? new Response('nope', { status: 404 })
         : new Response('[]', { status: 200 }));
-    await expect(loadDataset('data/')).rejects.toThrow(/flows\.json/);
+    await expect(loadDataset('data/')).rejects.toThrow(/flows-sheet\.json/);
   });
 
-  test('builds months and the country index', async () => {
+  test('loads one flows file per product group and builds months and the country index', async () => {
     const files: Record<string, unknown> = {
-      'flows.json': [flow({ month: '2024-02' }), flow({ month: '2024-01' })],
+      'flows-plate.json': [flow({ month: '2024-02' })],
+      'flows-sheet.json': [flow({ month: '2024-01', group: 'sheet' })],
+      'flows-bar_rod_profiles.json': [],
+      'flows-unwrought.json': [],
+      'flows-tube.json': [],
+      'flows-foil.json': [],
       'countries.json': COUNTRIES,
       'meta.json': { latestMonth: '2024-02', fetchedAt: 'x', source: 'y' },
       'tariff-events.json': [],
@@ -283,6 +288,7 @@ describe('loadDataset', () => {
       new Response(JSON.stringify(files[url.split('/').pop()!]), { status: 200 }));
     const d = await loadDataset('data/');
     expect(d.months).toEqual(['2024-01', '2024-02']);
+    expect(d.flows.map((f) => f.group).sort()).toEqual(['plate', 'sheet']);
     expect(d.countries.get('1220')!.name).toBe('Canada');
   });
 });

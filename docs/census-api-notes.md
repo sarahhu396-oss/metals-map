@@ -240,6 +240,30 @@ Codes changed at the HTS revisions of 2019-07/2020-01 (imports) and 2022-01
 7608200090 TUBES AND PIPES ALUM AL EXCPT SEAMLESS                2015-01 2026-09
 ```
 
-## Reconciliation
+## Country reference
 
-See the end of this file (added in Task 4).
+`pipeline/country-reference.json` joins the Census Schedule C country list
+(https://www.census.gov/foreign-trade/schedules/c/country.txt, code → name and
+ISO code) with representative coordinates from the `world-countries` package
+(v5.1.0, `latlng`). Kosovo (4803), Gaza Strip (5082), and West Bank (5083) have
+no match there and were placed by hand. A Census code missing from the file
+fails validation.
+
+## Reconciliation (Task 4)
+
+Plate + sheet (HS 7606) imports for consumption, calendar 2024, from the
+pipeline's output:
+
+| | Pipeline (sum of HS10 country rows) | Census published | Difference |
+|---|---|---|---|
+| Value | $3,398,830,200 | $3,398,830,200 (HS4 7606, all countries) | 0.00% |
+| Calculated duty | $264,593,052 | $264,593,052 (HS4 7606) | 0.00% |
+| Quantity | 919,336 t | 919,336 t (HS10 “total for all countries” rows) | 0.00% |
+
+Plate (over 6.3 mm) was 121,938 t of that, 13.3%.
+
+Caveat: both comparison figures come from the Census API itself, at a
+different aggregation level (HS4 totals carry no quantity, so tonnes are
+checked against the HS10 total rows). USITC DataWeb, which the plan named as an
+independent check, is not reachable from the build environment. A comparison
+against DataWeb is still worth doing once by hand.
