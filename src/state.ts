@@ -2,7 +2,7 @@ import type { Selection } from '../shared/types';
 
 export function defaultSelection(latestMonth: string): Selection {
   return {
-    product: 'plate_sheet',
+    product: 'plate',
     direction: 'imports',
     measure: 'tonnes',
     month: latestMonth,

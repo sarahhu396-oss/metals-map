@@ -1,7 +1,8 @@
 import type { Direction, Measure, ProductGroup } from '../../shared/types';
 
 export const PRODUCT_LABELS: Record<ProductGroup | 'all', string> = {
-  plate_sheet: 'Plate & sheet',
+  plate: 'Plate (over 6.3 mm)',
+  sheet: 'Sheet & strip',
   bar_rod_profiles: 'Bar, rod & profiles',
   unwrought: 'Unwrought',
   tube: 'Tube & pipe',

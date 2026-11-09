@@ -37,11 +37,11 @@ function ds(flows: Flow[]): Dataset {
 }
 
 function flow(p: Partial<Flow>): Flow {
-  return { month: LAST, dir: 'imports', group: 'plate_sheet', cty: '1220', tonnes: 1, value: 1, duty: 0, ...p };
+  return { month: LAST, dir: 'imports', group: 'plate', cty: '1220', tonnes: 1, value: 1, duty: 0, ...p };
 }
 
 const SEL: Selection = {
-  product: 'plate_sheet', direction: 'imports', measure: 'tonnes',
+  product: 'plate', direction: 'imports', measure: 'tonnes',
   month: LAST, window: 'month', country: null,
 };
 
@@ -210,8 +210,8 @@ describe('timeSeries', () => {
 describe('productMix', () => {
   test('lists every group for the country', () => {
     const mix = productMix(ds([flow({ tonnes: 3 }), flow({ group: 'foil', tonnes: 4 })]), SEL, '1220');
-    expect(mix).toHaveLength(5);
-    expect(mix.find((m) => m.group === 'plate_sheet')!.value).toBe(3);
+    expect(mix).toHaveLength(6);
+    expect(mix.find((m) => m.group === 'plate')!.value).toBe(3);
     expect(mix.find((m) => m.group === 'foil')!.value).toBe(4);
     expect(mix.find((m) => m.group === 'tube')!.value).toBe(0);
   });

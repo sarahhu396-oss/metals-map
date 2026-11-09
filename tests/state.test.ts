@@ -3,7 +3,7 @@ import { createStore, defaultSelection } from '../src/state';
 
 test('defaultSelection uses the spec defaults at the latest month', () => {
   expect(defaultSelection('2025-08')).toEqual({
-    product: 'plate_sheet', direction: 'imports', measure: 'tonnes',
+    product: 'plate', direction: 'imports', measure: 'tonnes',
     month: '2025-08', window: 't12', country: null,
   });
 });
@@ -14,7 +14,7 @@ test('set merges the patch and notifies once', () => {
   store.subscribe(fn);
   store.set({ measure: 'value', country: '1220' });
   expect(fn).toHaveBeenCalledTimes(1);
-  expect(store.get()).toMatchObject({ measure: 'value', country: '1220', product: 'plate_sheet' });
+  expect(store.get()).toMatchObject({ measure: 'value', country: '1220', product: 'plate' });
   expect(fn.mock.calls[0][0]).toEqual(store.get());
 });
 

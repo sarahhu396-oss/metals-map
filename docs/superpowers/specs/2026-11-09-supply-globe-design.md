@@ -58,7 +58,7 @@ The overall project has two stages, each with its own spec and plan:
 
 | Control   | Options                                                              | Default        |
 |-----------|----------------------------------------------------------------------|----------------|
-| Product   | Plate/sheet, bar/rod/profiles, unwrought, tube, foil, all            | Plate/sheet    |
+| Product   | Plate, sheet, bar/rod/profiles, unwrought, tube, foil, all           | Plate          |
 | Direction | Imports, exports, both                                               | Imports        |
 | Measure   | Tonnes, dollar value, price per tonne                                | Tonnes         |
 | Period    | Month slider with play/pause                                         | Latest month   |
@@ -67,8 +67,9 @@ The overall project has two stages, each with its own spec and plan:
 "All" sums the product groups. Price per tonne is value ÷ quantity and is not
 shown for "both" directions or where quantity is missing.
 
-If the 10-digit codes allow plate to be separated from sheet by thickness,
-plate/sheet becomes two product groups (see Open items).
+Plate (over 6.3 mm) and sheet are separate groups: the 10-digit codes under
+7606 carry a 6.3 mm break, except two clad codes (about 4% of tonnes), which
+count as sheet. See `docs/census-api-notes.md`.
 
 ### Side panel
 
@@ -113,7 +114,8 @@ A hand-maintained mapping file, `pipeline/product-groups.json`, assigns each
 
 | Group             | HS heading |
 |-------------------|------------|
-| Plate/sheet       | 7606       |
+| Plate             | 7606 (over 6.3 mm) |
+| Sheet             | 7606 (6.3 mm or less, and clad) |
 | Bar/rod/profiles  | 7604       |
 | Unwrought         | 7601       |
 | Tube              | 7608       |

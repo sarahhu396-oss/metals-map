@@ -1,7 +1,8 @@
 export type Direction = 'imports' | 'exports';
 
 export type ProductGroup =
-  | 'plate_sheet'
+  | 'plate'
+  | 'sheet'
   | 'bar_rod_profiles'
   | 'unwrought'
   | 'tube'
@@ -54,7 +55,8 @@ export interface Selection {
 }
 
 export const PRODUCT_GROUPS: ProductGroup[] = [
-  'plate_sheet',
+  'plate',
+  'sheet',
   'bar_rod_profiles',
   'unwrought',
   'tube',
