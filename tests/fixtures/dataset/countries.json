@@ -1,0 +1,58 @@
+[
+ {
+  "code": "1220",
+  "name": "Canada",
+  "iso2": "CA",
+  "lat": 56,
+  "lon": -106
+ },
+ {
+  "code": "2010",
+  "name": "Mexico",
+  "iso2": "MX",
+  "lat": 23,
+  "lon": -102
+ },
+ {
+  "code": "5700",
+  "name": "China",
+  "iso2": "CN",
+  "lat": 35,
+  "lon": 104
+ },
+ {
+  "code": "4280",
+  "name": "Germany",
+  "iso2": "DE",
+  "lat": 51,
+  "lon": 10
+ },
+ {
+  "code": "5330",
+  "name": "India",
+  "iso2": "IN",
+  "lat": 21,
+  "lon": 78
+ },
+ {
+  "code": "5800",
+  "name": "Korea, South",
+  "iso2": "KR",
+  "lat": 36,
+  "lon": 128
+ },
+ {
+  "code": "4550",
+  "name": "Austria",
+  "iso2": "AT",
+  "lat": 47.5,
+  "lon": 14.5
+ },
+ {
+  "code": "6021",
+  "name": "Australia",
+  "iso2": "AU",
+  "lat": -25,
+  "lon": 134
+ }
+]
