@@ -184,14 +184,20 @@ export function concentration(ranked: Ranked[]): number | null {
 
 export interface Arc {
   cty: string;
+  /** Partner country name, for the label at the partner end */
+  name: string;
   dir: Direction;
   from: [number, number];
   to: [number, number];
   value: number;
 }
 
-export function arcs(ds: Dataset, sel: Selection): Arc[] {
-  const out: Arc[] = [];
+/** How many partners get an arc, per direction. */
+export const ARC_LIMIT = 20;
+
+/** Arcs for the largest partners in each selected direction, largest first. */
+export function arcs(ds: Dataset, sel: Selection, limit = ARC_LIMIT): Arc[] {
+  const byDir: Record<Direction, Arc[]> = { imports: [], exports: [] };
   for (const [cty, rec] of totalsByCountry(ds, sel)) {
     const c = ds.countries.get(cty);
     if (!c) continue;
@@ -199,12 +205,15 @@ export function arcs(ds: Dataset, sel: Selection): Arc[] {
     for (const dir of selectedDirections(sel)) {
       const value = measureFor(rec[dir], sel);
       if (value === null || value <= 0) continue;
-      out.push(dir === 'imports'
-        ? { cty, dir, from: here, to: US, value }
-        : { cty, dir, from: US, to: here, value });
+      byDir[dir].push(dir === 'imports'
+        ? { cty, name: c.name, dir, from: here, to: US, value }
+        : { cty, name: c.name, dir, from: US, to: here, value });
     }
   }
-  return out;
+  return selectedDirections(sel).flatMap((dir) =>
+    byDir[dir]
+      .sort((a, b) => b.value - a.value || a.cty.localeCompare(b.cty))
+      .slice(0, limit));
 }
 
 function windowValue(ds: Dataset, sel: Selection, month: string, cty?: string): number | null {

@@ -82,3 +82,13 @@ test('a data file that fails to load is named in the error', async ({ page }) =>
   await page.goto('/');
   await expect(page.getByRole('alert')).toContainText('flows-plate.json');
 });
+
+test('arcs carry country labels, and each direction keeps at most 20 partners', async ({ page }) => {
+  await serveFixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.map-label:not([hidden])').first()).toBeVisible();
+  await expect(page.locator('.map-label:not([hidden])', { hasText: 'Canada' })).toBeVisible();
+  await page.getByTestId('direction').selectOption('both');
+  await expect.poll(() => arcCount(page)).toBeGreaterThan(0);
+  expect(await arcCount(page)).toBeLessThanOrEqual(40);
+});

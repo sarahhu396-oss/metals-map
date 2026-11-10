@@ -177,15 +177,56 @@ describe('arcs', () => {
   ];
   test('imports run from the country to the US', () => {
     const a = arcs(ds(flows), SEL);
-    expect(a).toEqual([{ cty: '1220', dir: 'imports', from: [-106, 56], to: US, value: 10 }]);
+    expect(a).toEqual([{ cty: '1220', name: 'Canada', dir: 'imports', from: [-106, 56], to: US, value: 10 }]);
   });
   test('exports run from the US to the country', () => {
     const a = arcs(ds(flows), { ...SEL, direction: 'exports' });
-    expect(a).toEqual([{ cty: '1220', dir: 'exports', from: US, to: [-106, 56], value: 4 }]);
+    expect(a).toEqual([{ cty: '1220', name: 'Canada', dir: 'exports', from: US, to: [-106, 56], value: 4 }]);
   });
   test('both yields one arc per direction', () => {
     const a = arcs(ds(flows), { ...SEL, direction: 'both' });
     expect(a.filter((x) => x.cty === '1220').map((x) => x.dir).sort()).toEqual(['exports', 'imports']);
+  });
+
+  describe('top partners only', () => {
+    // 25 countries; country i imports i+1 tonnes and exports 100-i tonnes
+    const many: Country[] = Array.from({ length: 25 }, (_, i) => ({
+      code: String(2000 + i), name: `C${i}`, iso2: 'XX', lat: i, lon: i,
+    }));
+    const manyFlows = many.flatMap((c, i) => [
+      flow({ cty: c.code, tonnes: i + 1 }),
+      flow({ cty: c.code, dir: 'exports', tonnes: 100 - i, duty: null }),
+    ]);
+    const big: Dataset = { ...ds(manyFlows), countries: new Map(many.map((c) => [c.code, c])) };
+
+    test('keeps the 20 largest partners, largest first', () => {
+      const a = arcs(big, SEL);
+      expect(a).toHaveLength(20);
+      expect(a[0]).toMatchObject({ cty: '2024', value: 25 });
+      expect(a.map((x) => x.value)).toEqual(Array.from({ length: 20 }, (_, i) => 25 - i));
+    });
+
+    test('both directions keep their own top 20', () => {
+      const a = arcs(big, { ...SEL, direction: 'both' });
+      const imp = a.filter((x) => x.dir === 'imports').map((x) => x.cty);
+      const exp = a.filter((x) => x.dir === 'exports').map((x) => x.cty);
+      expect(imp).toHaveLength(20);
+      expect(exp).toHaveLength(20);
+      expect(imp).toContain('2024');
+      expect(imp).not.toContain('2004');
+      expect(exp).toContain('2000');
+      expect(exp).not.toContain('2024');
+    });
+
+    test('a custom limit is honoured', () => {
+      expect(arcs(big, SEL, 3).map((x) => x.cty)).toEqual(['2024', '2023', '2022']);
+    });
+
+    test('ties are broken by country code so the cut is stable', () => {
+      const tied = many.map((c) => flow({ cty: c.code, tonnes: 5 }));
+      const a = arcs({ ...big, flows: tied }, SEL, 2);
+      expect(a.map((x) => x.cty)).toEqual(['2000', '2001']);
+    });
   });
 });
 
