@@ -2,7 +2,9 @@ import './style.css';
 import { loadDataset } from './data/load';
 import { arcs } from './data/query';
 import { createGlobe } from './map/globe';
+import { mountCustomers } from './demand/customers';
 import { loadDemand } from './demand/load';
+import { loadUsShapes } from './demand/usmap';
 import { mountTabs, readTab, type Tab } from './tabs';
 import { createStore, defaultSelection } from './state';
 import { mountControls } from './ui/controls';
@@ -19,13 +21,8 @@ function showTab(tab: Tab): void {
   if (tab !== 'customers' || customersStarted) return;
   customersStarted = true;
   box.textContent = 'Loading customer data…';
-  loadDemand().then(
-    ({ demand }) => {
-      const p = document.createElement('p');
-      p.dataset.testid = 'customers-ready';
-      p.textContent = `Customer map coming soon — ${demand.counties.length} counties loaded, ${demand.year}`;
-      box.replaceChildren(p);
-    },
+  Promise.all([loadDemand(), loadUsShapes()]).then(
+    ([{ demand }, shapes]) => mountCustomers(box, demand, shapes),
     (err: Error) => {
       customersStarted = false;
       const p = document.createElement('p');
