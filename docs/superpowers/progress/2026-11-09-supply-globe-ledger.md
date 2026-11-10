@@ -38,3 +38,4 @@ Task 9: Ruling: deploy.yml also runs on workflow_run after a successful refresh 
 Task 9: Ruling: country names shortened from Schedule C long forms ("Germany (Federal Republic of Germany)" → "Germany", 27 entries reviewed) after seeing them in the real-data panel — cost if wrong: none.
 Task 9: note: e2e needs PW_CHROMIUM_PATH=/opt/pw-browsers/chromium in this container (installed Chromium build differs from the pinned Playwright's); config already supported it.
 Task 9: note: real-data screenshot check — loads 2015-01..2026-09, 38 plate import arcs, no app errors (one 404, almost certainly /favicon.ico).
+Task 9: complete (commits 13365c8..6f8d85b, tests: npm test →              at least ~256ms faster with isolate: false — reuses workers across files instead of one per file)
