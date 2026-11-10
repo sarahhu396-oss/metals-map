@@ -15,6 +15,10 @@ export function validateDemand(d: DemandData, domestic: DomesticData, missingPoi
   for (const g of INDUSTRY_GROUPS) {
     if (!d.counties.some((c) => c.estab[g] > 0)) problems.push(`group ${g} has no establishments nationally`);
   }
+  for (const g of INDUSTRY_GROUPS) {
+    const t = d.usTotals?.[g];
+    if (!t || !(t.estab > 0)) problems.push(`group ${g} has no national total`);
+  }
   for (const [product, p] of Object.entries(domestic.products)) {
     if (!p) continue;
     for (const y of YEARS) {

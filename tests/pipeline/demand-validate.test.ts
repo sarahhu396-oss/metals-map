@@ -10,7 +10,8 @@ function demand(n: number, estabEach = 1): DemandData {
     estab: Object.fromEntries(INDUSTRY_GROUPS.map((g) => [g, estabEach])) as CountyDemand['estab'],
     emp: zero(),
   }));
-  return { year: 2023, groups: [], counties };
+  const usTotals = Object.fromEntries(INDUSTRY_GROUPS.map((g) => [g, { estab: n * estabEach, emp: 1000 }])) as DemandData['usTotals'];
+  return { year: 2023, groups: [], counties, usTotals };
 }
 
 const years = [2012, 2013, 2014, 2015, 2016];
@@ -37,6 +38,15 @@ describe('validateDemand', () => {
     const p = validateDemand(d, domestic(), []);
     expect(p).toHaveLength(1);
     expect(p[0]).toContain('hvac');
+  });
+  test('names a group with no national total', () => {
+    const d = demand(3222);
+    delete (d.usTotals as Partial<DemandData['usTotals']>).semis;
+    d.usTotals.hvac = { estab: 0, emp: null };
+    const p = validateDemand(d, domestic(), []);
+    expect(p).toHaveLength(2);
+    expect(p.join(' ')).toContain('semis');
+    expect(p.join(' ')).toContain('hvac');
   });
   test('names a product and year missing domestic values', () => {
     const p = validateDemand(demand(3222), domestic(product({ domestic: { ...full(), '2014': null } })), []);

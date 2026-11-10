@@ -217,5 +217,39 @@
     "shops": 100
    }
   }
- ]
+ ],
+ "usTotals": {
+  "aero": {
+   "estab": 20,
+   "emp": 2000
+  },
+  "auto": {
+   "estab": 20,
+   "emp": 2000
+  },
+  "trucks": {
+   "estab": 20,
+   "emp": 2000
+  },
+  "machinery": {
+   "estab": 20,
+   "emp": 2000
+  },
+  "semis": {
+   "estab": 20,
+   "emp": 2000
+  },
+  "electrical": {
+   "estab": 20,
+   "emp": 2000
+  },
+  "hvac": {
+   "estab": 20,
+   "emp": 2000
+  },
+  "shops": {
+   "estab": 20,
+   "emp": 2000
+  }
+ }
 }

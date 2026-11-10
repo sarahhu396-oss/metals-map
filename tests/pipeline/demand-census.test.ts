@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import {
-  asmUrl, cbpUrl, geoinfoUrl, latestCbpYear, parseAsm, parseCbp, parsePoints,
+  asmUrl, cbpUrl, cbpUsUrl, cbpYearProbe, geoinfoUrl, latestCbpYear, parseAsm, parseCbp, parseCbpUs, parsePoints,
+  parsePopulation, popUrl,
 } from '../../pipeline/demand/census';
 import { cleanPlace } from '../../pipeline/demand/places';
 import { fetchText } from '../../pipeline/fetch';
@@ -65,6 +66,62 @@ describe('parseCbp', () => {
   });
   test('empty body (204) is an empty map', () => {
     expect(parseCbp('').size).toBe(0);
+  });
+});
+
+describe('national totals and place population', () => {
+  test('cbpUsUrl asks for the US row of the same series', () => {
+    const u = new URL(cbpUsUrl(2023, '3364', 'abc'));
+    expect(u.pathname).toBe('/data/2023/cbp');
+    expect(u.searchParams.get('for')).toBe('us:*');
+    expect(u.searchParams.get('NAICS2017')).toBe('3364');
+    expect(u.searchParams.get('EMPSZES')).toBe('001');
+    expect(u.searchParams.get('key')).toBe('abc');
+  });
+  test('parseCbpUs reads the one US row; D and N withhold employment; empty is null', () => {
+    const body = (flag: string) => JSON.stringify([
+      ['NAME', 'ESTAB', 'EMP', 'EMP_N_F', 'NAICS2017', 'EMPSZES', 'us'],
+      ['United States', '1840', '421482', flag, '3364', '001', '1'],
+    ]);
+    expect(parseCbpUs(body('G'))).toEqual({ estab: 1840, emp: 421482 });
+    expect(parseCbpUs(body('D'))).toEqual({ estab: 1840, emp: null });
+    expect(parseCbpUs('')).toBeNull();
+  });
+  test('popUrl asks for 2020 place population in every state', () => {
+    const u = new URL(popUrl('abc'));
+    expect(u.pathname).toBe('/data/2020/dec/pl');
+    expect(u.searchParams.get('get')).toBe('P1_001N');
+    expect(u.searchParams.get('for')).toBe('place:*');
+    expect(u.searchParams.get('in')).toBe('state:*');
+    expect(u.searchParams.get('key')).toBe('abc');
+  });
+  test('parsePopulation keys on state+place FIPS', () => {
+    const m = parsePopulation(JSON.stringify([['P1_001N', 'state', 'place'], ['639111', '26', '22000'], ['1000', '40', '24200']]));
+    expect(m.get('2622000')).toBe(639111);
+    expect(m.get('4024200')).toBe(1000);
+    expect(m.size).toBe(2);
+  });
+});
+
+describe('cbpYearProbe', () => {
+  test('walks back past years with no data and logs each year probed', async () => {
+    const log: string[] = [];
+    const probe = cbpYearProbe(async (u) => (u.includes('/2023/') ? '[["a"],["b"]]' : ''), 'k', (m) => log.push(m));
+    expect(await latestCbpYear(probe, 2025)).toBe(2023);
+    expect(log.join('\n')).toContain('2025');
+    expect(log.join('\n')).toContain('2024');
+    expect(log.join('\n')).toContain('2023');
+  });
+  test('a non-fatal error counts as no data for that year, and is logged', async () => {
+    const log: string[] = [];
+    const probe = cbpYearProbe(async (u) => { if (u.includes('/2024/')) throw new Error('HTTP 500'); return '[["a"],["b"]]'; }, 'k', (m) => log.push(m));
+    expect(await latestCbpYear(probe, 2024 + 1)).toBe(2025);
+    expect(await probe(2024)).toBe(false);
+    expect(log.join('\n')).toContain('HTTP 500');
+  });
+  test('a fatal error (bad key) is rethrown, not swallowed', async () => {
+    const probe = cbpYearProbe(async () => { throw Object.assign(new Error('redirected - check CENSUS_API_KEY'), { fatal: true }); }, 'k');
+    await expect(latestCbpYear(probe, 2025)).rejects.toThrow(/CENSUS_API_KEY/);
   });
 });
 

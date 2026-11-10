@@ -9,12 +9,15 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PRODUCT_GROUPS, type Direction, type ProductGroup } from '../../shared/types';
 import {
-  INDUSTRY_GROUPS, type CountyDemand, type DemandData, type DomesticData, type DomesticProduct, type GroupDef, type Place,
+  INDUSTRY_GROUPS, type CountyDemand, type DemandData, type DomesticData, type DomesticProduct, type GroupDef, type Place, type UsTotal,
 } from '../../shared/demand';
 import { buildUrl, parseResponse } from '../census';
 import { fetchText } from '../fetch';
 import type { GroupMap } from '../transform';
-import { asmUrl, cbpUrl, geoinfoUrl, latestCbpYear, parseAsm, parseCbp, parsePoints } from './census';
+import {
+  asmUrl, cbpUrl, cbpUsUrl, cbpYearProbe, geoinfoUrl, latestCbpYear, parseAsm, parseCbp, parseCbpUs, parsePoints,
+  parsePopulation, popUrl,
+} from './census';
 import { groupCounty, type Cell } from './group';
 import { cleanPlace } from './places';
 import { sumTrade } from './trade';
@@ -93,29 +96,32 @@ async function main(): Promise<number> {
   const groups = readJson<GroupMap>(join(ROOT, 'pipeline/product-groups.json'));
   const problems: string[] = [];
 
-  const year = await latestCbpYear(async (y) => {
-    try { return (await fetchText(cbpUrl(y, '3364', apiKey))).trim() !== ''; } catch { return false; }
-  }, new Date().getUTCFullYear() - 1);
+  const year = await latestCbpYear(cbpYearProbe((u) => fetchText(u), apiKey, console.log), new Date().getUTCFullYear() - 1);
   console.log(`CBP year ${year}`);
 
   const naics = [...new Set(defs.flatMap((d) => [...d.add, ...d.subtract]))].sort();
   const bodies = await pool(naics.map((code) => async () => ({ code, body: await fetchText(cbpUrl(year, code, apiKey)) })), CONCURRENCY);
+  const usBodies = await pool(naics.map((code) => async () => ({ code, cell: parseCbpUs(await fetchText(cbpUsUrl(year, code, apiKey))) })), CONCURRENCY);
+  const usCells = new Map<string, Cell>();
+  for (const { code, cell } of usBodies) if (cell) usCells.set(code, cell);
   const cbp = new Map<string, Map<string, Cell & { name: string }>>();
   for (const { code, body } of bodies) {
     const m = parseCbp(body);
     if (m.size === 0) {
       // Some codes are suppressed at county level (332993); accept them only if the code exists nationally.
-      const us = await fetchText(cbpUrl(year, code, apiKey).replace('for=county:*', 'for=us:*'));
-      if (us.trim() === '') problems.push(`NAICS ${code} returned no data`);
+      if (!usCells.has(code)) problems.push(`NAICS ${code} returned no data`);
       else console.warn(`note: NAICS ${code} has no county-level data; counted as zero in every county`);
     }
     cbp.set(code, m);
   }
+  const usTotals = {} as Record<(typeof INDUSTRY_GROUPS)[number], UsTotal>;
+  for (const def of defs) usTotals[def.id] = groupCounty(usCells, def);
 
   const points = new Map(parsePoints(await fetchText(geoinfoUrl(year, 'county', apiKey)), 'county').map((p) => [p.id, p]));
   const placeRows = parsePoints(await fetchText(geoinfoUrl(year, 'place', apiKey)), 'place');
+  const population = parsePopulation(await fetchText(popUrl(apiKey)));
   const places: Place[] = placeRows
-    .map((p) => { const c = cleanPlace(p.name); return [c.name, c.state, p.lat, p.lon] as Place; })
+    .map((p) => { const c = cleanPlace(p.name); return [c.name, c.state, p.lat, p.lon, population.get(p.id) ?? 0] as Place; })
     .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : a[2] - b[2]));
 
   const missingPoints = [...new Set([...cbp.values()].flatMap((m) => [...m.keys()]))].filter((f) => !points.has(f)).sort();
@@ -131,7 +137,7 @@ async function main(): Promise<number> {
     }
     return { fips: pt.id, name: pt.name, lat: pt.lat, lon: pt.lon, estab, emp };
   });
-  const demand: DemandData = { year, groups: INDUSTRY_GROUPS.map((id) => defs.find((d) => d.id === id)!), counties };
+  const demand: DemandData = { year, groups: INDUSTRY_GROUPS.map((id) => defs.find((d) => d.id === id)!), counties, usTotals };
 
   const domestic = await domesticData(groups, apiKey);
   problems.push(...validateDemand(demand, domestic, missingPoints));
@@ -154,6 +160,14 @@ async function main(): Promise<number> {
   for (const [name, text] of Object.entries(files)) writeFileSync(join(tmp, name), text);
   for (const name of Object.keys(files)) renameSync(join(tmp, name), join(OUT, name));
   rmSync(tmp, { recursive: true, force: true });
+  const withPop = places.filter((p) => p[4] > 0).length;
+  console.log(`places with a population: ${withPop} of ${places.length}`);
+  for (const g of INDUSTRY_GROUPS) {
+    const t = usTotals[g];
+    const sum = (k: 'estab' | 'emp') => counties.reduce((a, c) => a + (c[k][g] ?? 0), 0);
+    const pct = (a: number, b: number | null) => (b ? `${((100 * a) / b).toFixed(1)}%` : 'n/a');
+    console.log(`coverage ${g}: employees ${pct(sum('emp'), t.emp)}, establishments ${pct(sum('estab'), t.estab)}`);
+  }
   console.log(`wrote ${counties.length} counties (${year}), ${places.length} places, ${Object.keys(domestic.products).length} domestic products`);
   return 0;
 }

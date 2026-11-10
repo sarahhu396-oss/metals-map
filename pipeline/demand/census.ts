@@ -31,6 +31,30 @@ export function parseCbp(body: string): Map<string, Cell & { name: string }> {
   return out;
 }
 
+/** The US-level row of the same series as cbpUrl. */
+export function cbpUsUrl(year: number, naics: string, apiKey?: string): string {
+  return url(`${year}/cbp`, {
+    get: 'NAME,ESTAB,EMP,EMP_N_F', for: 'us:*', NAICS2017: naics, EMPSZES: '001',
+  }, apiKey);
+}
+
+/** The national establishments and employment; null for an empty (204) response. */
+export function parseCbpUs(body: string): Cell | null {
+  const r = table(body)[0];
+  if (!r) return null;
+  return { estab: Number(r.ESTAB), emp: r.EMP_N_F === 'D' || r.EMP_N_F === 'N' ? null : Number(r.EMP) };
+}
+
+/** 2020 decennial (PL 94-171) population of every place. */
+export function popUrl(apiKey?: string): string {
+  return url('2020/dec/pl', { get: 'P1_001N', for: 'place:*', in: 'state:*' }, apiKey);
+}
+
+/** Population by state+place FIPS. */
+export function parsePopulation(body: string): Map<string, number> {
+  return new Map(table(body).map((r) => [r.state + r.place, Number(r.P1_001N)]));
+}
+
 export function geoinfoUrl(year: number, level: 'county' | 'place', apiKey?: string): string {
   return url(`${year}/geoinfo`, { get: 'NAME,INTPTLAT,INTPTLON', for: `${level}:*` }, apiKey);
 }
@@ -48,6 +72,28 @@ export function asmUrl(year: number, apiKey?: string): string {
 /** Product shipments in dollars (the API reports thousands). */
 export function parseAsm(body: string): Map<string, number> {
   return new Map(table(body).map((r) => [r.PSCODE, Number(r.PRODVAL) * 1000]));
+}
+
+/**
+ * Probe for latestCbpYear: true when the year has CBP data. An error marked fatal (a bad key)
+ * is rethrown; any other error counts as no data for that year. Every probed year is logged.
+ */
+export function cbpYearProbe(
+  get: (url: string) => Promise<string>,
+  apiKey: string,
+  log: (msg: string) => void = () => {},
+): (year: number) => Promise<boolean> {
+  return async (year) => {
+    try {
+      const ok = (await get(cbpUrl(year, '3364', apiKey))).trim() !== '';
+      log(`CBP ${year}: ${ok ? 'data' : 'no data'}`);
+      return ok;
+    } catch (err) {
+      if ((err as { fatal?: boolean }).fatal) throw err;
+      log(`CBP ${year}: error, treated as no data (${(err as Error).message.replace(/key=[^&\s]+/g, 'key=***')})`);
+      return false;
+    }
+  };
 }
 
 /** Newest year, searching back from `from` (at most five years), for which the probe succeeds. */

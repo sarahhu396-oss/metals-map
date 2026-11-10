@@ -42,13 +42,23 @@ export interface CountyDemand {
   emp: Record<IndustryGroup, number | null>;
 }
 
+/** US-level CBP total for one industry group (same add/subtract grouping as the counties) */
+export interface UsTotal {
+  estab: number;
+  /** null = withheld */
+  emp: number | null;
+}
+
 export interface DemandData {
   year: number;
   groups: GroupDef[];
   counties: CountyDemand[];
+  /** National totals, to show how much of the US the county figures cover */
+  usTotals: Record<IndustryGroup, UsTotal>;
 }
 
-export type Place = [name: string, state: string, lat: number, lon: number];
+/** population is the 2020 census count; 0 when unknown */
+export type Place = [name: string, state: string, lat: number, lon: number, population: number];
 
 export interface DomesticProduct {
   /** ASM product codes summed */
