@@ -87,6 +87,7 @@ export function mountCustomerControls(el: HTMLElement, d: DemandData, handlers: 
   let hits: Place[] = [];
   let active = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let dirty = false;
   const showHits = () => {
     list.replaceChildren(
       ...hits.map((p, i) => {
@@ -110,6 +111,7 @@ export function mountCustomerControls(el: HTMLElement, d: DemandData, handlers: 
     try {
       const all = places ?? (await ensurePlaces());
       hits = searchPlaces(all, input.value);
+      dirty = false;
       active = 0;
       showHits();
     } catch {
@@ -118,6 +120,7 @@ export function mountCustomerControls(el: HTMLElement, d: DemandData, handlers: 
   };
   input.addEventListener('focus', () => void ensurePlaces().catch(() => {}));
   input.addEventListener('input', () => {
+    dirty = true;
     clearTimeout(timer);
     timer = setTimeout(() => void search(), 120);
   });
@@ -130,7 +133,7 @@ export function mountCustomerControls(el: HTMLElement, d: DemandData, handlers: 
       ev.preventDefault();
       clearTimeout(timer);
       void (async () => {
-        await search();
+        if (dirty || !hits.length) await search();
         if (hits[active]) pick(hits[active]);
       })();
     } else if (ev.key === 'Escape') {

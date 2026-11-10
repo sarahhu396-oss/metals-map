@@ -144,11 +144,27 @@ export function createUsMap(el: HTMLElement, opts: UsMapOptions) {
     gCounties.append(p);
   }
 
+  /** Client pixels to viewBox units, honouring letterboxing; falls back to a stretched box. */
+  function clientToSvg(cx: number, cy: number): [number, number] | null {
+    const ctm = typeof svg.getScreenCTM === 'function' ? svg.getScreenCTM() : null;
+    if (ctm && typeof svg.createSVGPoint === 'function') {
+      const pt = svg.createSVGPoint();
+      pt.x = cx;
+      pt.y = cy;
+      const p = pt.matrixTransform(ctm.inverse());
+      return [p.x, p.y];
+    }
+    const r = svg.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    return [(cx - r.left) * (W / r.width), (cy - r.top) * (H / r.height)];
+  }
+
   svg.addEventListener('click', (ev) => {
     if (opts.placing?.() || (ev as MouseEvent).shiftKey) {
-      const r = svg.getBoundingClientRect();
-      if (!r.width || !r.height) return;
-      const ll = projection.invert?.([((ev as MouseEvent).clientX - r.left) * (W / r.width), ((ev as MouseEvent).clientY - r.top) * (H / r.height)]);
+      const me = ev as MouseEvent;
+      const xy = clientToSvg(me.clientX, me.clientY);
+      if (!xy) return;
+      const ll = projection.invert?.(xy);
       if (ll) opts.onMapClick([ll[0], ll[1]]);
       return;
     }

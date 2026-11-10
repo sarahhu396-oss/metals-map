@@ -3,6 +3,7 @@ import { MEASURE_LABELS } from './controls';
 import { RINGS_MI, byGroup, countyValue, territories, topCounties, total, within, type Amount } from './query';
 import { formatCount, type CustomerState } from './usmap';
 
+export const EMPTY_NOTE = 'Select at least one industry to see customers.';
 export const OMITTED_NOTE = 'Census omits industry figures for counties with very few establishments; those show as none.';
 
 function h<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', ...kids: (Node | string)[]): HTMLElementTagNameMap[K] {
@@ -29,13 +30,19 @@ export function mountCustomerPanel(el: HTMLElement, opts: PanelOptions) {
   function row(label: string, cs: CountyDemand[], s: CustomerState, d: DemandData): HTMLElement {
     const det = h('details', 'amount-row');
     const sum = h('summary');
-    sum.append(h('span', 'row-label', label), h('span', 'row-value', amountText(total(cs, s.groups, s.measure))));
+    const vals = h('span', 'row-value');
+    vals.append(
+      h('span', 'v-emp', `${amountText(total(cs, s.groups, 'emp'))} employees`),
+      h('span', 'v-estab', `${formatCount(total(cs, s.groups, 'estab').value)} establishments`),
+    );
+    sum.append(h('span', 'row-label', label), vals);
     det.append(sum);
-    const per = byGroup(cs, s.groups, s.measure);
+    const emp = byGroup(cs, s.groups, 'emp');
+    const est = byGroup(cs, s.groups, 'estab');
     const ul = h('ul', 'by-group');
     for (const g of s.groups) {
       const name = d.groups.find((x) => x.id === g)?.label ?? g;
-      ul.append(h('li', '', h('span', '', name), h('span', '', amountText(per[g]))));
+      ul.append(h('li', '', h('span', '', name), h('span', '', `${amountText(emp[g])} emp · ${formatCount(est[g].value)} estab`)));
     }
     det.append(ul);
     return det;
@@ -73,7 +80,7 @@ export function mountCustomerPanel(el: HTMLElement, opts: PanelOptions) {
       card.append(row('Territory (nearest site)', terr[i], s, d));
       box.append(card);
     });
-    if (s.sites.length) box.prepend(h('h3', 'section-title', `${MEASURE_LABELS[s.measure]} by site`));
+    if (s.sites.length) box.prepend(h('h3', 'section-title', 'Employees and establishments by site'));
     return box;
   }
 
@@ -115,6 +122,12 @@ export function mountCustomerPanel(el: HTMLElement, opts: PanelOptions) {
   }
 
   function render(d: DemandData, s: CustomerState): void {
+    if (!s.groups.length) {
+      const msg = h('p', 'empty', EMPTY_NOTE);
+      msg.dataset.testid = 'empty-selection';
+      el.replaceChildren(h('h2', '', 'Customers'), msg);
+      return;
+    }
     el.replaceChildren(...(s.county ? [detail(d, s), siteCards(d, s)] : [overview(d, s), siteCards(d, s)]));
   }
   return { render };

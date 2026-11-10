@@ -246,7 +246,6 @@ body[data-tab="customers"] #panel { display: none; }
   grid-template: "controls controls" auto "map panel" 1fr / minmax(0, 1fr) 380px;
   gap: 0;
   height: 100%;
-  margin: -16px;
   min-height: 0;
 }
 .customers > :first-child { grid-area: controls; }
@@ -323,3 +322,6 @@ body[data-tab="customers"] #panel { display: none; }
   .customers { grid-template: "controls" auto "map" auto "panel" auto / 1fr; height: auto; }
   .customer-panel { border-left: 0; border-top: 1px solid var(--rule); }
 }
+
+.amount-row .row-value { display: flex; flex-direction: column; align-items: flex-end; }
+.amount-row .v-estab { font-size: 11px; color: var(--text-2); }
