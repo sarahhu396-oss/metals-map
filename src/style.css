@@ -211,6 +211,8 @@ body[data-tab="customers"] #panel { display: none; }
     height: auto;
   }
   #customers { grid-area: auto; }
+  body[data-tab="customers"] { grid-template: "tabs" auto "customers" 1fr / 1fr; }
+  body[data-tab="customers"] #customers { grid-area: customers; }
   #panel { border-left: 0; border-top: 1px solid var(--rule); overflow: visible; }
 }
 

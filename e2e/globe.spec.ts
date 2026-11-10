@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -9,7 +9,7 @@ const FIXTURES = path.resolve('tests/fixtures/dataset');
 async function serveFixtures(page: Page, opts: { fail?: string } = {}): Promise<void> {
   await page.route('**/data/*.json', (route) => {
     const file = path.basename(new URL(route.request().url()).pathname);
-    if (file === opts.fail) return route.abort();
+    if (file === opts.fail || !existsSync(path.join(FIXTURES, file))) return route.abort();
     return route.fulfill({
       body: readFileSync(path.join(FIXTURES, file)),
       contentType: 'application/json',
@@ -100,4 +100,18 @@ test('the panel accent matches the arc colours: red for imports, black for expor
   await expect.poll(bar).toBe('rgb(214, 40, 40)');
   await page.getByTestId('direction').selectOption('exports');
   await expect.poll(bar).toBe('rgb(17, 17, 17)');
+});
+
+test('returning to Supply after opening Customers directly leaves a working globe', async ({ page }) => {
+  await serveFixtures(page);
+  // Customers data is not served by the fixtures; that load fails, which is
+  // irrelevant here, the test is about the globe.
+  await page.goto('/?tab=customers');
+  await expect(page.locator('#customers')).toBeVisible();
+  await page.getByTestId('tab-supply').click();
+  await expect(page.locator('#map[data-arc-count]')).toBeVisible();
+  expect(await arcCount(page)).toBeGreaterThan(0);
+  const box = await page.locator('#map canvas').boundingBox();
+  expect(box!.width).toBeGreaterThan(0);
+  expect(box!.height).toBeGreaterThan(0);
 });
