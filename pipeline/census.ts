@@ -29,7 +29,7 @@ const VARS = {
 } as const;
 
 /** One request for every 10-digit code under `heading`, all countries, months `from`..`to` inclusive. */
-export function buildUrl(dir: Direction, heading: string, from: string, to: string, apiKey?: string): string {
+export function buildUrl(dir: Direction, heading: string, from: string, to: string, apiKey?: string, cty?: string): string {
   const v = VARS[dir];
   const get = ['CTY_CODE', 'CTY_NAME', v.commodity, v.desc, v.qty, 'UNIT_QY1', v.value, ...(v.duty ? [v.duty] : [])];
   const params = new URLSearchParams({
@@ -38,6 +38,7 @@ export function buildUrl(dir: Direction, heading: string, from: string, to: stri
     COMM_LVL: 'HS10',
     [v.commodity]: `${heading}*`,
   });
+  if (cty) params.set('CTY_CODE', cty);
   if (apiKey) params.set('key', apiKey);
   return `${BASE}/${dir}/hs?${params.toString()}`;
 }

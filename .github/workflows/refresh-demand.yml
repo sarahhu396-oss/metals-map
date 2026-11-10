@@ -1,0 +1,41 @@
+name: Refresh demand data
+
+on:
+  schedule:
+    - cron: '23 10 15 5 *' # 15 May each year, 10:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-demand
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Run pipeline
+        run: npm run pipeline:demand
+        env:
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+      - name: Commit data if it changed
+        run: |
+          FILES="public/data/demand.json public/data/places.json public/data/domestic.json"
+          if git diff --quiet -- $FILES; then
+            echo "No data changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add $FILES
+          git commit -m "data: yearly demand refresh ($(jq -r .year public/data/demand.json))"
+          git push
