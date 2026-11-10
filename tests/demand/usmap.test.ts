@@ -23,7 +23,8 @@ function rect(id: string, lon: number, lat: number, w = 0.4, h = 0.4): Feature<P
   };
 }
 function demand(counties: CountyDemand[]): DemandData {
-  return { year: 2023, groups: INDUSTRY_GROUPS.map((id) => ({ id, label: id, add: [], subtract: [] })), counties };
+  return { year: 2023, groups: INDUSTRY_GROUPS.map((id) => ({ id, label: id, add: [], subtract: [] })), counties,
+    usTotals: Object.fromEntries(INDUSTRY_GROUPS.map((g) => [g, { estab: 1, emp: 1 }])) as DemandData['usTotals'] };
 }
 const noop = { onCounty() {}, onMapClick() {} };
 const state = (over = {}) => ({ groups: [...INDUSTRY_GROUPS], measure: 'emp' as const, sites: [], county: null, ...over });

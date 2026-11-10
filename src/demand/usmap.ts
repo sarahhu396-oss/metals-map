@@ -93,6 +93,14 @@ export function ctMerged(
   return areaValues(d, groups, m, ct.length ? new Map([['09', ct]]) : new Map());
 }
 
+/** Title of a map area: a county, Connecticut's "state total", or other merged areas "(combined)". */
+export function areaName(cs: CountyDemand[], area: string): string {
+  const state = cs[0].name.split(', ').pop();
+  if (cs.length < 2) return cs[0].name;
+  if (area.length === 2) return `${state}: state total`;
+  return `${cs.map((c) => c.name.split(', ')[0]).join(' + ')}, ${state} (combined)`;
+}
+
 export function formatCount(n: number): string {
   return n.toLocaleString('en-US');
 }
@@ -220,11 +228,7 @@ export function createUsMap(el: HTMLElement, opts: UsMapOptions) {
       const valueText = withheld
         ? `employment withheld (${formatCount(estabOf(cs))} establishments)`
         : `${formatCount(v ?? 0)} ${unit(s.measure)}`;
-      let name: string;
-      if (!has) name = 'No data';
-      else if (members && area.length === 2) name = `${cs[0].name.split(', ').pop()}: state total`;
-      else if (members) name = `${cs.map((c) => c.name.split(', ')[0]).join(' + ')}, ${cs[0].name.split(', ').pop()} (combined)`;
-      else name = cs[0].name;
+      const name = !has ? 'No data' : areaName(cs, area);
       p.firstElementChild!.textContent = !has ? `${name}` : `${name}: ${valueText}`;
     }
     if (selected) gCounties.append(selected);

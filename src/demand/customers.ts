@@ -30,13 +30,18 @@ export function mountCustomers(root: HTMLElement, d: DemandData, shapes: UsShape
     county: null,
   };
 
+  const writeUrl = (): void => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sites', encodeSites(s.sites));
+    window.history.replaceState(null, '', url);
+  };
+  const siteKey = (x: Site): string => `${x.name}@${encodeSites([{ ...x, name: '' }])}`;
+
   const set = (patch: Partial<CustomerState>): void => {
     s = { ...s, ...patch };
     if (patch.sites) {
       saveSites(s.sites, storage());
-      const url = new URL(window.location.href);
-      url.searchParams.set('sites', encodeSites(s.sites));
-      window.history.replaceState(null, '', url);
+      writeUrl();
     }
     draw();
   };
@@ -44,7 +49,10 @@ export function mountCustomers(root: HTMLElement, d: DemandData, shapes: UsShape
   const controls = mountCustomerControls(controlsEl, d, {
     onGroups: (groups: IndustryGroup[]) => set({ groups }),
     onMeasure: (measure) => set({ measure }),
-    onAddSite: (site: Site) => set({ sites: [...s.sites, site] }),
+    onAddSite: (site: Site) => {
+      if (s.sites.some((x) => siteKey(x) === siteKey(site))) return;
+      set({ sites: [...s.sites, site] });
+    },
     onRemoveSite: (i) => set({ sites: s.sites.filter((_, j) => j !== i) }),
   });
   const map = createUsMap(mapEl, {
@@ -60,5 +68,6 @@ export function mountCustomers(root: HTMLElement, d: DemandData, shapes: UsShape
     map.render(d, s);
     panel.render(d, s);
   }
+  writeUrl();
   draw();
 }

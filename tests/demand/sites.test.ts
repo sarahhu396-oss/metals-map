@@ -113,19 +113,38 @@ test('saveSites writes the encoded list and swallows errors', () => {
 });
 
 const small: Place[] = [
-  ['Mount San Jose', 'XX', 1, 1],
-  ['San Jose', 'CA', 37.3, -121.9],
-  ['San Jose', 'IL', 40.3, -89.5],
-  ['Mayagüez', 'PR', 18.2, -67.1],
-  ['St. Louis', 'MO', 38.6, -90.2],
-  ['Saint Louis', 'MI', 43.4, -84.6],
-  ['Louisville', 'KY', 38.2, -85.7],
+  ['Mount San Jose', 'XX', 1, 1, 10],
+  ['San Jose', 'CA', 37.3, -121.9, 1_000_000],
+  ['San Jose', 'IL', 40.3, -89.5, 600],
+  ['Mayagüez', 'PR', 18.2, -67.1, 73_000],
+  ['St. Louis', 'MO', 38.6, -90.2, 300_000],
+  ['Saint Louis', 'MI', 43.4, -84.6, 7_000],
+  ['Louisville', 'KY', 38.2, -85.7, 600_000],
 ];
 
 test('searchPlaces basics', () => {
   expect(searchPlaces(small, '')).toEqual([]);
   expect(searchPlaces(small, '   ')).toEqual([]);
   expect(searchPlaces(small, 'zzz')).toEqual([]);
+});
+
+test('within a rank, larger places come first, then name, then state', () => {
+  const ps: Place[] = [
+    ['Springfield', 'AL', 0, 0, 0],
+    ['Springfield', 'MO', 0, 0, 169_000],
+    ['Springfield', 'IL', 0, 0, 114_000],
+    ['Springfield', 'AK', 0, 0, 0],
+    ['Springfield Gardens', 'NY', 0, 0, 0],
+  ];
+  expect(searchPlaces(ps, 'springfield').map(label)).toEqual([
+    'Springfield, MO', 'Springfield, IL', 'Springfield, AK', 'Springfield, AL', 'Springfield Gardens, NY',
+  ]);
+});
+
+test('a partial saint ("sai", "sain") matches St. names; shorter prefixes do not', () => {
+  expect(searchPlaces(small, 'sai louis').map(label).sort()).toEqual(['Saint Louis, MI', 'St. Louis, MO']);
+  expect(searchPlaces(small, 'sain louis').map(label).sort()).toEqual(['Saint Louis, MI', 'St. Louis, MO']);
+  expect(searchPlaces(small, 'sa louis')).toEqual([]);
 });
 
 test('prefix matches rank before infix, ties by name then state', () => {
@@ -146,7 +165,7 @@ test('accents, st / st. / saint are equivalent', () => {
 });
 
 test('limit defaults to 8 and is adjustable', () => {
-  const many: Place[] = Array.from({ length: 20 }, (_, i) => ['Springfield', 'S' + String(i).padStart(2, '0'), 0, 0]);
+  const many: Place[] = Array.from({ length: 20 }, (_, i) => ['Springfield', 'S' + String(i).padStart(2, '0'), 0, 0, 0]);
   expect(searchPlaces(many, 'spring')).toHaveLength(8);
   expect(searchPlaces(many, 'spring', 3)).toHaveLength(3);
 });
@@ -158,4 +177,20 @@ test('real places: san jose, mayaguez, st/saint louis', () => {
   expect(searchPlaces(real, 'mayaguez').map(label)).toContain('Mayagüez, PR');
   expect(searchPlaces(real, 'st louis', 20).map(label)).toContain('St. Louis, MO');
   expect(searchPlaces(real, 'saint louis', 20).map(label)).toContain('St. Louis, MO');
+});
+
+test('real places: the big city wins an ambiguous name', () => {
+  const first = (q: string) => label(searchPlaces(real, q)[0]);
+  expect(first('detroit')).toBe('Detroit, MI');
+  expect(first('houston')).toBe('Houston, TX');
+  expect(first('san jose')).toBe('San Jose, CA');
+  expect(first('portland')).toBe('Portland, OR');
+  const sp = searchPlaces(real, 'springfield', 8).map(label);
+  expect(sp).toContain('Springfield, MO');
+  expect(sp).toContain('Springfield, IL');
+});
+
+test('real places: every place carries a population', () => {
+  expect(real.every((p) => p.length === 5 && Number.isFinite(p[4]))).toBe(true);
+  expect(real.find((p) => p[0] === 'Detroit' && p[1] === 'MI')![4]).toBeGreaterThan(600_000);
 });

@@ -89,21 +89,30 @@ function tokens(s: string): string[] {
     .map((t) => (t === 'saint' ? 'st' : t));
 }
 
-/** Every query token must prefix a name token (or equal the state code). Full-name prefixes rank first. */
+const SAINT = 'saint';
+
+/**
+ * Every query token must prefix a name token (or equal the state code). Full-name prefixes rank
+ * first; within a rank larger places come first, then name, then state. A query token that is
+ * at least 3 letters of "saint" also matches "St.".
+ */
 export function searchPlaces(places: Place[], query: string, limit = 8): Place[] {
-  const q = tokens(query);
+  const q = tokens(query).map((t) => ({ t, saint: t.length >= 3 && t.length < SAINT.length && SAINT.startsWith(t) }));
   if (!q.length) return [];
-  const qs = q.join(' ');
+  const qs = q.map((x) => (x.saint ? 'st' : x.t)).join(' ');
   const hits: { p: Place; rank: number; name: string; state: string }[] = [];
   for (const p of places) {
     const nt = tokens(p[0]);
     const state = p[1].toLowerCase();
-    if (!q.every((t) => t === state || nt.some((n) => n.startsWith(t)))) continue;
+    if (!q.every(({ t, saint }) => t === state || nt.some((n) => n.startsWith(t) || (saint && n === 'st')))) continue;
     hits.push({ p, rank: nt.join(' ').startsWith(qs) ? 0 : 1, name: nt.join(' '), state });
   }
   hits.sort(
     (a, b) =>
-      a.rank - b.rank || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0) || (a.state < b.state ? -1 : a.state > b.state ? 1 : 0),
+      a.rank - b.rank ||
+      b.p[4] - a.p[4] ||
+      (a.name < b.name ? -1 : a.name > b.name ? 1 : 0) ||
+      (a.state < b.state ? -1 : a.state > b.state ? 1 : 0),
   );
   return hits.slice(0, limit).map((h) => h.p);
 }

@@ -98,9 +98,15 @@ inner one is subtracted from the outer one. The mapping is in
 ### What the figures mean
 
 - **Year:** CBP 2023, the newest the API served when the data was built.
-- **Few establishments:** Census leaves out industry figures for counties with
-  very few establishments. Those cells are shown as none (zero), so small
-  counties can be understated. Establishment counts are not withheld.
+- **Few establishments:** Census leaves out county figures where an industry
+  has only a few establishments, including some large plants (for example
+  Honda's Union County, Ohio, shows no automotive row). An omitted county row is
+  counted as zero, so county and ring totals are lower bounds. A row whose
+  employment Census flags D or N (withheld) is different: that figure is
+  unknown, never zero, and is hatched on the map. Establishment counts are not
+  withheld. The panel's coverage line compares the county figures with the US
+  total for the selected industries ("Counties shown account for X% of US
+  employees").
 - **Noise:** Census adds noise to employment so single employers cannot be
   identified. Treat employment as approximate. Employment
   that Census marks as withheld is kept as withheld, never as zero or an
@@ -123,7 +129,7 @@ first).
 ### Sites
 
 Detroit, MI is preloaded. Add a site by typing a city name (suggestions come
-from `public/data/places.json`, Census places) or with **Pick on map**, then
+from `public/data/places.json`, Census places, larger places first) or with **Pick on map**, then
 clicking the map (Shift+click also places a site) and naming it. Remove a site
 with the × on its chip. Sites are saved in the page link and in the browser,
 so a link reproduces the same set. Malformed entries in a link are ignored.
@@ -186,12 +192,12 @@ CENSUS_API_KEY=... npm run pipeline:demand
 ```
 
 It reads the groups in `pipeline/industries.json`, fetches CBP county data
-for every code, the Census places list, and the domestic shipments, and writes
+and the US total for every code, the Census places list with 2020 populations, and the domestic shipments, and writes
 `demand.json`, `places.json` and `domestic.json` in `public/data/`. It makes
 many requests, one per NAICS code and more, so expect a long run; the yearly
 workflow allows up to two hours. Like the trade pipeline, it validates first
 (3,100–3,300 counties, every CBP county has a Census geoinfo location point,
-every industry group has establishments somewhere in the US, and every product
+every industry group has establishments somewhere in the US and a national total, and every product
 has 2012–2016 domestic values and 2016 imports) and replaces nothing on
 failure.
 

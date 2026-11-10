@@ -1,10 +1,11 @@
 import type { CountyDemand, DemandData, IndustryGroup } from '../../shared/demand';
 import { MEASURE_LABELS } from './controls';
 import { RINGS_MI, byGroup, countyValue, territories, topCounties, total, within, type Amount } from './query';
-import { formatCount, type CustomerState } from './usmap';
+import { areaName, formatCount, type CustomerState } from './usmap';
 
 export const EMPTY_NOTE = 'Select at least one industry to see customers.';
-export const OMITTED_NOTE = 'Census omits industry figures for counties with very few establishments; those show as none.';
+export const OMITTED_NOTE =
+  'Census leaves out county figures where an industry has only a few establishments, including some large plants, so county and ring totals are lower bounds.';
 
 function h<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', ...kids: (Node | string)[]): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -13,9 +14,35 @@ function h<K extends keyof HTMLElementTagNameMap>(tag: K, className = '', ...kid
   return e;
 }
 
-function amountText(a: Amount): string {
+/** "N noun", or "at least N noun (M counties withheld)"; with `bare` a plain number when nothing is withheld. */
+function amountText(a: Amount, noun: string, bare = false): string {
   const base = formatCount(a.value);
-  return a.withheldCounties > 0 ? `${base} (${a.withheldCounties} counties withheld)` : base;
+  const m = a.withheldCounties;
+  if (m > 0) return `at least ${base} ${noun} (${m} ${m === 1 ? 'county' : 'counties'} withheld)`;
+  return bare ? base : `${base} ${noun}`;
+}
+
+/** Share of the US total covered, one decimal; null when the US total is missing or zero. */
+function pct(part: number, whole: number | null | undefined): string | null {
+  return whole ? `${((100 * part) / whole).toFixed(1)}%` : null;
+}
+
+export function coverageText(d: DemandData, groups: IndustryGroup[]): string | null {
+  let usEmp = 0;
+  let usEstab = 0;
+  let empOk = true;
+  for (const g of groups) {
+    const t = d.usTotals?.[g];
+    if (!t) return null;
+    usEstab += t.estab;
+    if (t.emp === null) empOk = false;
+    else usEmp += t.emp;
+  }
+  const emp = empOk ? pct(total(d.counties, groups, 'emp').value, usEmp) : null;
+  const estab = pct(total(d.counties, groups, 'estab').value, usEstab);
+  if (!emp && !estab) return null;
+  const what = emp && estab ? `${emp} of US employees (${estab} of establishments)` : emp ? `${emp} of US employees` : `${estab} of US establishments`;
+  return `Counties shown account for ${what} in the selected industries.`;
 }
 
 export interface PanelOptions {
@@ -32,7 +59,7 @@ export function mountCustomerPanel(el: HTMLElement, opts: PanelOptions) {
     const sum = h('summary');
     const vals = h('span', 'row-value');
     vals.append(
-      h('span', 'v-emp', `${amountText(total(cs, s.groups, 'emp'))} employees`),
+      h('span', 'v-emp', amountText(total(cs, s.groups, 'emp'), 'employees')),
       h('span', 'v-estab', `${formatCount(total(cs, s.groups, 'estab').value)} establishments`),
     );
     sum.append(h('span', 'row-label', label), vals);
@@ -42,10 +69,15 @@ export function mountCustomerPanel(el: HTMLElement, opts: PanelOptions) {
     const ul = h('ul', 'by-group');
     for (const g of s.groups) {
       const name = d.groups.find((x) => x.id === g)?.label ?? g;
-      ul.append(h('li', '', h('span', '', name), h('span', '', `${amountText(emp[g])} emp · ${formatCount(est[g].value)} estab`)));
+      ul.append(h('li', '', h('span', '', name), h('span', '', `${amountText(emp[g], 'emp')} · ${formatCount(est[g].value)} estab`)));
     }
     det.append(ul);
     return det;
+  }
+
+  function coverage(d: DemandData, s: CustomerState): HTMLElement[] {
+    const t = coverageText(d, s.groups as IndustryGroup[]);
+    return t ? [h('p', 'note coverage', t)] : [];
   }
 
   function overview(d: DemandData, s: CustomerState): HTMLElement {
@@ -53,8 +85,9 @@ export function mountCustomerPanel(el: HTMLElement, opts: PanelOptions) {
     box.append(
       h('h2', '', 'Customers'),
       h('div', 'stat-label', `${MEASURE_LABELS[s.measure]} in the selected industries, US total (${d.year})`),
-      h('div', 'stat-value', amountText(total(d.counties, s.groups, s.measure))),
+      h('div', 'stat-value', amountText(total(d.counties, s.groups, s.measure), s.measure === 'emp' ? 'employees' : 'establishments', true)),
       h('p', 'note', OMITTED_NOTE),
+      ...coverage(d, s),
       h('h3', '', 'Top 10 counties'),
     );
     const ol = h('ol', 'ranking');
@@ -95,8 +128,7 @@ export function mountCustomerPanel(el: HTMLElement, opts: PanelOptions) {
       return box;
     }
     const merged = cs.length > 1;
-    const title = merged ? `${cs[0].name.split(', ').pop()}: state total` : cs[0].name;
-    box.append(back, h('h2', '', title));
+    box.append(back, h('h2', '', areaName(cs, s.county!)));
     if (merged) box.append(h('p', 'note', `Sum of ${cs.length} data areas: ${cs.map((c) => c.name.split(', ')[0]).join(', ')}.`));
     const table = h('table', 'detail-table');
     const head = h('tr');
