@@ -351,7 +351,7 @@
  },
  {
   "code": "4099",
-  "name": "Denmark, except Greenland",
+  "name": "Denmark",
   "iso2": "DK",
   "lat": 56,
   "lon": 10
@@ -414,7 +414,7 @@
  },
  {
   "code": "4280",
-  "name": "Germany (Federal Republic of Germany)",
+  "name": "Germany",
   "iso2": "DE",
   "lat": 51,
   "lon": 9
@@ -547,7 +547,7 @@
  },
  {
   "code": "4641",
-  "name": "Moldova (Republic of Moldova)",
+  "name": "Moldova",
   "iso2": "MD",
   "lat": 47,
   "lon": 29
@@ -610,7 +610,7 @@
  },
  {
   "code": "4752",
-  "name": "Holy See (Vatican City)",
+  "name": "Holy See",
   "iso2": "VA",
   "lat": 41.9,
   "lon": 12.45
@@ -715,7 +715,7 @@
  },
  {
   "code": "5020",
-  "name": "Syria (Syrian Arab Republic)",
+  "name": "Syria",
   "iso2": "SY",
   "lat": 35,
   "lon": 38
@@ -743,14 +743,14 @@
  },
  {
   "code": "5082",
-  "name": "Gaza Strip administered by Israel",
+  "name": "Gaza Strip",
   "iso2": "PS",
   "lat": 31.4,
   "lon": 34.35
  },
  {
   "code": "5083",
-  "name": "West Bank administered by Israel",
+  "name": "West Bank",
   "iso2": "PS",
   "lat": 31.95,
   "lon": 35.25
@@ -792,7 +792,7 @@
  },
  {
   "code": "5210",
-  "name": "Yemen (Republic of Yemen)",
+  "name": "Yemen",
   "iso2": "YE",
   "lat": 15,
   "lon": 48
@@ -855,7 +855,7 @@
  },
  {
   "code": "5460",
-  "name": "Burma (Myanmar)",
+  "name": "Burma",
   "iso2": "MM",
   "lat": 22,
   "lon": 98
@@ -960,7 +960,7 @@
  },
  {
   "code": "5800",
-  "name": "South Korea (Republic of Korea)",
+  "name": "South Korea",
   "iso2": "KR",
   "lat": 37,
   "lon": 127.5
@@ -1002,7 +1002,7 @@
  },
  {
   "code": "6024",
-  "name": "Christmas Island (in the Indian Ocean)",
+  "name": "Christmas Island",
   "iso2": "CX",
   "lat": -10.5,
   "lon": 105.66666666
@@ -1044,7 +1044,7 @@
  },
  {
   "code": "6150",
-  "name": "Samoa (Western Samoa)",
+  "name": "Samoa",
   "iso2": "WS",
   "lat": -13.58333333,
   "lon": -172.33333333
@@ -1093,7 +1093,7 @@
  },
  {
   "code": "6820",
-  "name": "Micronesia, Federated States of",
+  "name": "Micronesia",
   "iso2": "FM",
   "lat": 6.91666666,
   "lon": 158.25
@@ -1296,7 +1296,7 @@
  },
  {
   "code": "7630",
-  "name": "Congo, Republic of the Congo",
+  "name": "Congo (Brazzaville)",
   "iso2": "CG",
   "lat": -1,
   "lon": 15
@@ -1324,7 +1324,7 @@
  },
  {
   "code": "7660",
-  "name": "Congo, Democratic Republic of the Congo (formerly Za",
+  "name": "Congo (Kinshasa)",
   "iso2": "CD",
   "lat": 0,
   "lon": 25
@@ -1387,7 +1387,7 @@
  },
  {
   "code": "7830",
-  "name": "Tanzania (United Republic of Tanzania)",
+  "name": "Tanzania",
   "iso2": "TZ",
   "lat": -6,
   "lon": 35
