@@ -3,9 +3,11 @@ import type { Dataset } from '../data/load';
 import {
   concentration, dutyRate, productMix, rankings, timeSeries, yoyChange,
 } from '../data/query';
+import { loadDomestic } from '../demand/load';
 import type { Store } from '../state';
 import { lineChart } from './chart';
 import { h } from './dom';
+import { importShareCard, type DomesticState } from './importshare';
 import {
   DIRECTION_LABELS, MEASURE_LABELS, PRODUCT_LABELS,
   formatChange, formatMeasure, formatMonth, formatShare,
@@ -116,6 +118,7 @@ function country(ds: Dataset, sel: Selection, store: Store, cty: string): (Node 
 
 export function mountPanel(el: HTMLElement, store: Store, ds: Dataset): void {
   el.dataset.testid = 'panel';
+  let domestic: DomesticState = 'loading';
   const render = (sel: Selection) => {
     // Accent colour follows the arcs: red imports, black exports (see style.css)
     el.dataset.direction = sel.direction;
@@ -125,6 +128,7 @@ export function mountPanel(el: HTMLElement, store: Store, ds: Dataset): void {
         h('p', { class: 'subhead' }, heading(sel))),
       ...(sel.country === null ? overview(ds, sel, store) : country(ds, sel, store, sel.country))
         .filter((n): n is Node => n !== false),
+      importShareCard(domestic, sel.product),
       h('footer', {},
         h('p', {}, `Data through ${formatMonth(ds.meta.latestMonth)}. ${ds.meta.source}`),
         ds.events.length > 0 && h('details', {},
@@ -135,4 +139,6 @@ export function mountPanel(el: HTMLElement, store: Store, ds: Dataset): void {
   };
   store.subscribe(render);
   render(store.get());
+  loadDomestic().then((d) => { domestic = d; render(store.get()); },
+    () => { domestic = 'error'; render(store.get()); });
 }

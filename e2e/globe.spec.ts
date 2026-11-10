@@ -115,3 +115,11 @@ test('returning to Supply after opening Customers directly leaves a working glob
   expect(box!.width).toBeGreaterThan(0);
   expect(box!.height).toBeGreaterThan(0);
 });
+
+test('the Supply panel shows the import-share card for the default product', async ({ page }) => {
+  await serveFixtures(page);
+  await page.goto('/');
+  await expect(page.getByTestId('import-share')).toBeVisible();
+  // Synthetic fixture: 3e8 / (8e8 + 3e8 - 1e8) = 30.0%
+  await expect(page.getByTestId('import-share-value')).toHaveText('30.0%');
+});

@@ -231,3 +231,11 @@ body[data-tab="customers"] #panel { display: none; }
 
 #panel[data-direction="exports"] { --accent: var(--exports); }
 #panel[data-direction="both"] { --accent: var(--text-2); }
+
+.import-share { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--rule); }
+.import-share .share-value { font-size: 20px; }
+.import-share .basis { color: var(--text-2); font-size: 11px; }
+.import-share .share-bar { fill: var(--text-2); opacity: 0.55; }
+.share-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.share-table th { text-align: left; font-weight: normal; }
+.share-table td { text-align: right; }
