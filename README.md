@@ -1,10 +1,13 @@
-# Aluminum supply globe
+# Aluminum supply globe and customers map
 
-A static web page showing US imports and exports of aluminum mill products on
-a globe. You can view each partner country by month from January 2015, by
-tonnes, dollar value, or implied price per tonne. The side panel ranks
-partners and shows supply concentration, each country's trend over time with
-tariff events marked, and the effective duty rate.
+A static web page with two tabs. **Supply** shows US imports and exports of
+aluminum mill products on a globe. You can view each partner country by month
+from January 2015, by tonnes, dollar value, or implied price per tonne. The
+side panel ranks partners and shows supply concentration, each country's trend
+over time with tariff events marked, the effective duty rate, and the import
+share of US supply (2012–2016). **Customers** maps US manufacturers in
+aluminum-using industries by county and totals them around your sites; see
+[Customers tab](#customers-tab).
 
 ## Data
 
@@ -56,6 +59,94 @@ been done yet. See `docs/census-api-notes.md`.
 `public/data/tariff-events.json` is maintained by hand. Each entry links to its
 Federal Register document and is dated by its publication date.
 
+## Customers tab
+
+A map of US counties shaded by employees (or establishments) in the industry
+groups you tick, with a marker and dashed rings at 150, 300 and 500 miles for
+each site. The side panel gives the national total, the top 10 counties, and
+one card per site with employees and establishments within each ring and in
+the site's territory. Clicking a county shows its figures by group. The
+active tab is kept in the page URL (`?tab=customers`).
+
+### Industry groups
+
+Source: Census County Business Patterns (CBP), 2023, by 2017 NAICS code. Each
+code sits in exactly one group; where a listed code contains another, the
+inner one is subtracted from the outer one. The mapping is in
+`pipeline/industries.json`.
+
+| Group | NAICS codes |
+|---|---|
+| Aerospace, defense & space | 3364, 332992, 332993, 332994, 3366 |
+| Automotive | 3361, 3362 less 336212 and 336214, 3363 |
+| Trucks, trailers & rail | 336212, 336214, 3365 |
+| Machinery & equipment | 333 less 333242 and 333415, 3391 |
+| Semiconductors & electronics | 333242, 334413, 334220 |
+| Electrical equipment | 335 |
+| HVAC & refrigeration | 333415 |
+| Machine shops & fabricators | 332710, 3328, 3323 |
+
+- **Satellites** have no code of their own. Manufacturers sit inside
+  aerospace under 336414 (space vehicles, part of 3364), and satellite
+  communications equipment is in 334220 (Semiconductors & electronics).
+- **Solar** has no code either. Photovoltaic cells are in 334413
+  (Semiconductors & electronics), and solar racking and mounting structures are
+  structural metal work, 332312, inside 3323 (Machine shops & fabricators).
+  Both groups include non-solar firms.
+- **Boats** are in Aerospace, defense & space through 3366 (ships and boats).
+
+### What the figures mean
+
+- **Year:** CBP 2023, the newest the API served when the data was built.
+- **Few establishments:** Census leaves out industry figures for counties with
+  very few establishments. Those cells are shown as none (zero), so small
+  counties can be understated. Establishment counts are not withheld.
+- **Noise:** Census adds noise to employment so single employers cannot be
+  identified. Treat employment as approximate. Employment
+  that Census marks as withheld is kept as withheld, never as zero or an
+  estimate.
+- **Connecticut:** CBP 2023 reports Connecticut by its 9 planning regions, but
+  the county shapes (`us-atlas`) use the 8 older counties. Connecticut is
+  therefore drawn and shaded as one state-level area, whose figures are the
+  sum of the 9 regions.
+- **Alaska:** The shapes have one area (02261) where CBP has two boroughs;
+  its figures combine 02063 and 02066.
+
+### Distances, rings and territory
+
+Distances are straight-line (great-circle) from each site to each county's
+interior point, not driving distance. A county is inside a ring when its
+interior point is. Ring totals can count a county for several sites.
+Territory assigns each county to its nearest site (ties go to the site added
+first).
+
+### Sites
+
+Detroit, MI is preloaded. Add a site by typing a city name (suggestions come
+from `public/data/places.json`, Census places) or with **Pick on map**, then
+clicking the map (Shift+click also places a site) and naming it. Remove a site
+with the × on its chip. Sites are saved in the page link and in the browser,
+so a link reproduces the same set. Malformed entries in a link are ignored.
+
+### Import share (Supply tab)
+
+The card shows, for the selected product, the share of US supply that came
+from imports:
+
+> imports ÷ (US mill shipments + imports − exports), by value, calendar year
+
+Imports and exports are the same Census trade figures as the globe, summed over
+the same HS codes. US mill shipments are the value of product shipments from
+the Census Annual Survey of Manufactures. That series ends in 2016, so the card
+covers **2012–2016 only**. It is a baseline, not current. Notes:
+
+- Plate: the domestic series is 0.25 in. and over (6.35 mm), the import split is
+  over 6.3 mm.
+- Foil: domestic figures are plain foil; imports under 7607 also include backed
+  foil, which pushes the import share up.
+- A year with any missing term shows no number.
+- Domestic data lives in `public/data/domestic.json` and does not change.
+
 ## Running it
 
 Requires Node 20 or later.
@@ -64,13 +155,13 @@ Requires Node 20 or later.
 npm ci
 npm run dev        # local server
 npm test           # unit tests
-npm run e2e        # browser tests (Playwright, against a synthetic fixture)
+npm run e2e        # browser tests (Playwright, against synthetic fixtures)
 npm run build      # static site in dist/
 ```
 
 ### Refreshing the data
 
-The pipeline needs a free Census API key
+Both pipelines need a free Census API key
 (<https://api.census.gov/data/key_signup.html>). The key only works after you
 click the activation link Census emails you.
 
@@ -88,6 +179,20 @@ latest month earlier than before, or a monthly total that moved by more than
 1.5× against the previous data. On failure it prints each problem and leaves
 `public/data/` untouched.
 
+The customers data has its own pipeline:
+
+```bash
+CENSUS_API_KEY=... npm run pipeline:demand
+```
+
+It reads the groups in `pipeline/industries.json`, fetches CBP county data
+for every code, the Census places list, and the domestic shipments, and writes
+`demand.json`, `places.json` and `domestic.json` in `public/data/`. It makes
+many requests, one per NAICS code and more, so expect a long run; the yearly
+workflow allows up to two hours. Like the trade pipeline, it validates first
+(every code returns data, 3,100–3,300 counties, every county has a shape, every
+product has 2012–2016 values) and replaces nothing on failure.
+
 ## GitHub setup (one time)
 
 1. **Settings → Pages:** set the source to **GitHub Actions**.
@@ -98,5 +203,7 @@ latest month earlier than before, or a monthly total that moved by more than
 
 `refresh.yml` runs on the 10th of each month, or on demand. It commits
 `public/data/` only if the data changed, and a failed pipeline commits nothing.
-`deploy.yml` tests, builds, and publishes the site after each push to `main`
+`refresh-demand.yml` runs the customers pipeline once a year, on 15 May, or on
+demand (Actions tab, **Run workflow**), and commits `public/data/` only if
+something changed. `deploy.yml` tests, builds, and publishes the site after each push to `main`
 and after each successful refresh.

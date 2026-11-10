@@ -123,3 +123,76 @@ test('the Supply panel shows the import-share card for the default product', asy
   // Synthetic fixture: 3e8 / (8e8 + 3e8 - 1e8) = 30.0%
   await expect(page.getByTestId('import-share-value')).toHaveText('30.0%');
 });
+
+// Customers tab. Fixture counties are synthetic round numbers placed around
+// Detroit and Chicago; shapes come from the us-atlas package.
+test.describe('Customers tab', () => {
+  test('opens via the tab; Detroit card shows a non-zero 300 mi figure', async ({ page }) => {
+    await serveFixtures(page);
+    await page.goto('/');
+    await page.getByTestId('tab-customers').click();
+    await expect(page.getByTestId('customers-ready')).toBeVisible();
+    await expect(page).toHaveURL(/tab=customers/);
+    const card = page.getByTestId('site-card').filter({ hasText: 'Detroit, MI' });
+    await expect(card).toHaveCount(1);
+    const row = card.locator('.amount-row', { hasText: 'Within 300 mi' });
+    const text = await row.locator('.v-emp').textContent();
+    const n = Number(text!.replace(/[^0-9]/g, ''));
+    expect(n).toBeGreaterThan(0);
+  });
+
+  test('adding Chicago by search adds a card and the link; removing it drops both', async ({ page }) => {
+    await serveFixtures(page);
+    await page.goto('/?tab=customers');
+    await expect(page.getByTestId('customers-ready')).toBeVisible();
+    await expect(page.getByTestId('site-card')).toHaveCount(1);
+    const input = page.getByTestId('site-input');
+    await input.fill('Chicago');
+    await input.press('Enter');
+    await expect(page.getByTestId('site-card')).toHaveCount(2);
+    await expect(page.getByTestId('site-card').filter({ hasText: 'Chicago, IL' })).toHaveCount(1);
+    expect(new URL(page.url()).searchParams.get('sites')).toContain('Chicago, IL');
+    await page.getByRole('button', { name: 'Remove Chicago, IL' }).click();
+    await expect(page.getByTestId('site-card')).toHaveCount(1);
+    expect(new URL(page.url()).searchParams.get('sites')).not.toContain('Chicago');
+  });
+
+  test('clicking a county opens its detail, and back returns to the overview', async ({ page }) => {
+    await serveFixtures(page);
+    await page.goto('/?tab=customers');
+    const wayne = page.locator('path.county[data-fips="26163"]');
+    await expect(wayne).toBeAttached();
+    await wayne.dispatchEvent('click');
+    await expect(page.locator('.county-detail h2')).toHaveText('Wayne County, Michigan');
+    await page.locator('.county-detail .back').click();
+    await expect(page.locator('.county-detail')).toHaveCount(0);
+  });
+
+  test('unchecking every industry shows the empty-state message', async ({ page }) => {
+    await serveFixtures(page);
+    await page.goto('/?tab=customers');
+    await expect(page.getByTestId('customers-ready')).toBeVisible();
+    for (const g of ['aero', 'auto', 'trucks', 'machinery', 'semis', 'electrical', 'hvac', 'shops']) {
+      await page.getByTestId(`group-${g}`).uncheck();
+    }
+    await expect(page.getByTestId('empty-selection')).toContainText('Select at least one industry');
+    await page.getByTestId('group-aero').check();
+    await expect(page.getByTestId('empty-selection')).toHaveCount(0);
+  });
+
+  test('the Supply card shows imports and a percentage', async ({ page }) => {
+    await serveFixtures(page);
+    await page.goto('/');
+    await expect(page.getByTestId('import-share')).toContainText('imports');
+    await expect(page.getByTestId('import-share-value')).toHaveText(/\d+\.\d%/);
+  });
+
+  test('demand.json failing to load is named in the Customers tab; the globe still works', async ({ page }) => {
+    await serveFixtures(page, { fail: 'demand.json' });
+    await page.goto('/?tab=customers');
+    await expect(page.locator('#customers').getByRole('alert')).toContainText('demand.json');
+    await page.getByTestId('tab-supply').click();
+    await expect(page.locator('#map[data-arc-count]')).toBeVisible();
+    expect(await arcCount(page)).toBeGreaterThan(0);
+  });
+});

@@ -1,0 +1,221 @@
+{
+ "year": 2023,
+ "_note": "Synthetic test fixture, not Census data.",
+ "groups": [
+  {
+   "id": "aero",
+   "label": "Aerospace, defense & space",
+   "add": [
+    "3364",
+    "332992",
+    "332993",
+    "332994",
+    "3366"
+   ],
+   "subtract": []
+  },
+  {
+   "id": "auto",
+   "label": "Automotive",
+   "add": [
+    "3361",
+    "3362",
+    "3363"
+   ],
+   "subtract": [
+    "336212",
+    "336214"
+   ]
+  },
+  {
+   "id": "trucks",
+   "label": "Trucks, trailers & rail",
+   "add": [
+    "336212",
+    "336214",
+    "3365"
+   ],
+   "subtract": []
+  },
+  {
+   "id": "machinery",
+   "label": "Machinery & equipment",
+   "add": [
+    "333",
+    "3391"
+   ],
+   "subtract": [
+    "333242",
+    "333415"
+   ]
+  },
+  {
+   "id": "semis",
+   "label": "Semiconductors & electronics",
+   "add": [
+    "333242",
+    "334413",
+    "334220"
+   ],
+   "subtract": []
+  },
+  {
+   "id": "electrical",
+   "label": "Electrical equipment",
+   "add": [
+    "335"
+   ],
+   "subtract": []
+  },
+  {
+   "id": "hvac",
+   "label": "HVAC & refrigeration",
+   "add": [
+    "333415"
+   ],
+   "subtract": []
+  },
+  {
+   "id": "shops",
+   "label": "Machine shops & fabricators",
+   "add": [
+    "332710",
+    "3328",
+    "3323"
+   ],
+   "subtract": []
+  }
+ ],
+ "counties": [
+  {
+   "fips": "26163",
+   "name": "Wayne County, Michigan",
+   "lat": 42.2849,
+   "lon": -83.2617,
+   "estab": {
+    "aero": 10,
+    "auto": 10,
+    "trucks": 10,
+    "machinery": 10,
+    "semis": 10,
+    "electrical": 10,
+    "hvac": 10,
+    "shops": 10
+   },
+   "emp": {
+    "aero": 1000,
+    "auto": 1000,
+    "trucks": 1000,
+    "machinery": 1000,
+    "semis": 1000,
+    "electrical": 1000,
+    "hvac": 1000,
+    "shops": 1000
+   }
+  },
+  {
+   "fips": "26125",
+   "name": "Oakland County, Michigan",
+   "lat": 42.6604,
+   "lon": -83.3856,
+   "estab": {
+    "aero": 5,
+    "auto": 5,
+    "trucks": 5,
+    "machinery": 5,
+    "semis": 5,
+    "electrical": 5,
+    "hvac": 5,
+    "shops": 5
+   },
+   "emp": {
+    "aero": 500,
+    "auto": 500,
+    "trucks": 500,
+    "machinery": 500,
+    "semis": 500,
+    "electrical": 500,
+    "hvac": 500,
+    "shops": 500
+   }
+  },
+  {
+   "fips": "26099",
+   "name": "Macomb County, Michigan",
+   "lat": 42.6728,
+   "lon": -82.9087,
+   "estab": {
+    "aero": 2,
+    "auto": 2,
+    "trucks": 2,
+    "machinery": 2,
+    "semis": 2,
+    "electrical": 2,
+    "hvac": 2,
+    "shops": 2
+   },
+   "emp": {
+    "aero": 200,
+    "auto": 200,
+    "trucks": 200,
+    "machinery": 200,
+    "semis": 200,
+    "electrical": 200,
+    "hvac": 200,
+    "shops": 200
+   }
+  },
+  {
+   "fips": "17031",
+   "name": "Cook County, Illinois",
+   "lat": 41.84,
+   "lon": -87.8167,
+   "estab": {
+    "aero": 8,
+    "auto": 8,
+    "trucks": 8,
+    "machinery": 8,
+    "semis": 8,
+    "electrical": 8,
+    "hvac": 8,
+    "shops": 8
+   },
+   "emp": {
+    "aero": 800,
+    "auto": 800,
+    "trucks": 800,
+    "machinery": 800,
+    "semis": 800,
+    "electrical": 800,
+    "hvac": 800,
+    "shops": 800
+   }
+  },
+  {
+   "fips": "18089",
+   "name": "Lake County, Indiana",
+   "lat": 41.47,
+   "lon": -87.3731,
+   "estab": {
+    "aero": 1,
+    "auto": 1,
+    "trucks": 1,
+    "machinery": 1,
+    "semis": 1,
+    "electrical": 1,
+    "hvac": 1,
+    "shops": 1
+   },
+   "emp": {
+    "aero": 100,
+    "auto": 100,
+    "trucks": 100,
+    "machinery": 100,
+    "semis": 100,
+    "electrical": 100,
+    "hvac": 100,
+    "shops": 100
+   }
+  }
+ ]
+}
