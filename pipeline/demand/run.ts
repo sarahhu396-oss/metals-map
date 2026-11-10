@@ -17,6 +17,7 @@ import type { GroupMap } from '../transform';
 import { asmUrl, cbpUrl, geoinfoUrl, latestCbpYear, parseAsm, parseCbp, parsePoints } from './census';
 import { groupCounty, type Cell } from './group';
 import { cleanPlace } from './places';
+import { sumTrade } from './trade';
 import { validateDemand } from './validate';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -24,11 +25,6 @@ const OUT = join(ROOT, 'public/data');
 const CONCURRENCY = 4;
 const YEARS = [2012, 2013, 2014, 2015, 2016];
 const HEADINGS = ['7601', '7604', '7606', '7607', '7608'];
-/** Group for HS10 codes missing from product-groups.json (pre-2015 codes), by heading. 7606 has no fallback. */
-const HEADING_FALLBACK: Record<string, ProductGroup> = {
-  '7601': 'unwrought', '7604': 'bar_rod_profiles', '7607': 'foil', '7608': 'tube',
-};
-
 const DOMESTIC_CODES: Record<ProductGroup, { codes: string[]; note: string | null }> = {
   plate: { codes: ['3313151'], note: 'Domestic plate is 0.25 in. (6.35 mm) and over; imports split at 6.3 mm' },
   sheet: { codes: ['3313153'], note: null },
@@ -66,16 +62,7 @@ async function tradeTotals(groups: GroupMap, apiKey: string): Promise<YearTotals
   for (const dir of dirs) {
     for (const y of YEARS) {
       const mine = results.filter((r) => r.y === y && r.dir === dir);
-      if (mine.every((r) => r.rows.length === 0)) { out[dir][String(y)] = null; continue; }
-      const sums = Object.fromEntries(PRODUCT_GROUPS.map((g) => [g, 0])) as Record<ProductGroup, number | null>;
-      for (const { h, rows } of mine) {
-        for (const r of rows) {
-          const g = groups[r.commodity] ?? HEADING_FALLBACK[h];
-          if (g) sums[g] = (sums[g] ?? 0) + r.value;
-          else if (r.value !== 0) { sums.plate = null; sums.sheet = null; }
-        }
-      }
-      out[dir][String(y)] = sums;
+      out[dir][String(y)] = sumTrade(mine.map((r) => ({ heading: r.h, rows: r.rows })), groups);
     }
   }
   return out;
