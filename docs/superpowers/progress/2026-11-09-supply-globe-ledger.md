@@ -39,3 +39,14 @@ Task 9: Ruling: country names shortened from Schedule C long forms ("Germany (Fe
 Task 9: note: e2e needs PW_CHROMIUM_PATH=/opt/pw-browsers/chromium in this container (installed Chromium build differs from the pinned Playwright's); config already supported it.
 Task 9: note: real-data screenshot check — loads 2015-01..2026-09, 38 plate import arcs, no app errors (one 404, almost certainly /favicon.ico).
 Task 9: complete (commits 13365c8..6f8d85b, tests: npm test →              at least ~256ms faster with isolate: false — reuses workers across files instead of one per file)
+Final review: self-review by the executor over 5fdc975..HEAD (code only; data files spot-checked) — no reviewer subagent was dispatched because this session's policy is not to spawn agents unless the user asks. Weaker than a fresh reviewer; the user decides whether that is enough before merge.
+Final: Review Focus 1-5 each verified against code and a named test (transform aggregate-row test; fetchRange latest/gap tests; measureOf/yoyChange null tests; windowMonths t12 null; validate missing_country). No Critical or Important findings.
+Final: minor (deferred): arcs to distant partners (India, Bahrain, Europe over the pole) rise past the globe's edge in the default view and read as spikes; a lower ArcLayer getHeight (0.12 → ~0.05) would likely fix it.
+Final: minor (deferred): a large legitimate Census revision (>1.5x on a month/direction/group total of $1M or more) makes every monthly refresh fail until someone intervenes; there is no --accept-revisions override.
+Final: minor (deferred): `npm run pipeline -- --offline` skips the month-gap check that the fetch performs.
+Final: minor (deferred): tariff-events.json omits events that could not be confirmed from here (2018 exemptions, 2019 Canada/Mexico removal, 2022 EU/UK quotas, 2023 Russia) and dates them by Federal Register publication.
+Final: minor (deferred): reconciliation is against Census's own HS4/total rows, not USITC DataWeb.
+Final: minor (deferred): the browser's automatic /favicon.ico request returns 404 (no favicon).
+Final: minor (deferred): Vite warns that the main chunk is 919 kB (263 kB gzip), mostly deck.gl.
+Final: minor (deferred): faint ring artefact near the north pole (carried over from Task 6).
+STATUS: all tasks 1-9 complete; final review done (self-review).
