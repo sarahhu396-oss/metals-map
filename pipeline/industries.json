@@ -1,0 +1,10 @@
+[
+  { "id": "aero", "label": "Aerospace, defense & space", "add": ["3364", "332992", "332993", "332994", "3366"], "subtract": [] },
+  { "id": "auto", "label": "Automotive", "add": ["3361", "3362", "3363"], "subtract": ["336212", "336214"] },
+  { "id": "trucks", "label": "Trucks, trailers & rail", "add": ["336212", "336214", "3365"], "subtract": [] },
+  { "id": "machinery", "label": "Machinery & equipment", "add": ["333", "3391"], "subtract": ["333242", "333415"] },
+  { "id": "semis", "label": "Semiconductors & electronics", "add": ["333242", "334413", "334220"], "subtract": [] },
+  { "id": "electrical", "label": "Electrical equipment", "add": ["335"], "subtract": [] },
+  { "id": "hvac", "label": "HVAC & refrigeration", "add": ["333415"], "subtract": [] },
+  { "id": "shops", "label": "Machine shops & fabricators", "add": ["332710", "3328", "3323"], "subtract": [] }
+]
