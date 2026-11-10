@@ -117,6 +117,8 @@ function country(ds: Dataset, sel: Selection, store: Store, cty: string): (Node 
 export function mountPanel(el: HTMLElement, store: Store, ds: Dataset): void {
   el.dataset.testid = 'panel';
   const render = (sel: Selection) => {
+    // Accent colour follows the arcs: red imports, black exports (see style.css)
+    el.dataset.direction = sel.direction;
     el.replaceChildren(
       h('header', {},
         h('h1', {}, 'US aluminum trade'),

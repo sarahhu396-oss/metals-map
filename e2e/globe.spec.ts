@@ -92,3 +92,12 @@ test('arcs carry country labels, and each direction keeps at most 20 partners', 
   await expect.poll(() => arcCount(page)).toBeGreaterThan(0);
   expect(await arcCount(page)).toBeLessThanOrEqual(40);
 });
+
+test('the panel accent matches the arc colours: red for imports, black for exports', async ({ page }) => {
+  await serveFixtures(page);
+  await page.goto('/');
+  const bar = () => page.locator('.rank-bar').first().evaluate((el) => getComputedStyle(el).backgroundColor);
+  await expect.poll(bar).toBe('rgb(214, 40, 40)');
+  await page.getByTestId('direction').selectOption('exports');
+  await expect.poll(bar).toBe('rgb(17, 17, 17)');
+});
