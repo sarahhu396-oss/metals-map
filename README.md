@@ -190,8 +190,10 @@ for every code, the Census places list, and the domestic shipments, and writes
 `demand.json`, `places.json` and `domestic.json` in `public/data/`. It makes
 many requests, one per NAICS code and more, so expect a long run; the yearly
 workflow allows up to two hours. Like the trade pipeline, it validates first
-(every code returns data, 3,100–3,300 counties, every county has a shape, every
-product has 2012–2016 values) and replaces nothing on failure.
+(3,100–3,300 counties, every CBP county has a Census geoinfo location point,
+every industry group has establishments somewhere in the US, and every product
+has 2012–2016 domestic values and 2016 imports) and replaces nothing on
+failure.
 
 ## GitHub setup (one time)
 
