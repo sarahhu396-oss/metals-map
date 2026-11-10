@@ -22,7 +22,19 @@ export interface FetchOptions {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function getBody(url: string, f: typeof fetch, retryDelayMs: number, timeoutMs: number): Promise<string> {
+export interface FetchTextOptions {
+  fetchImpl?: typeof fetch;
+  /** Base delay between retries; doubles each time. */
+  retryDelayMs?: number;
+  /** Per-request timeout. */
+  timeoutMs?: number;
+}
+
+/** GET a Census API URL with retries. 204 resolves to ''; a redirect (bad key) is fatal. */
+export async function fetchText(url: string, opts: FetchTextOptions = {}): Promise<string> {
+  const f = opts.fetchImpl ?? fetch;
+  const retryDelayMs = opts.retryDelayMs ?? 2000;
+  const timeoutMs = opts.timeoutMs ?? 180_000;
   let last: Error = new Error('unreachable');
   for (let attempt = 0; attempt <= 3; attempt++) {
     if (attempt > 0) await sleep(retryDelayMs * 2 ** (attempt - 1));
@@ -87,7 +99,7 @@ export async function fetchRange(opts: FetchOptions): Promise<{ months: string[]
     const to = `${year}-12`;
     const jobs = opts.headings.flatMap((heading) =>
       DIRS.map((dir) => async () => {
-        const body = await getBody(buildUrl(dir, heading, from, to, opts.apiKey), f, retryDelayMs, timeoutMs);
+        const body = await fetchText(buildUrl(dir, heading, from, to, opts.apiKey), { fetchImpl: f, retryDelayMs, timeoutMs });
         writeFileSync(join(opts.outDir, `${dir}-${heading}-${year}.json`), body);
         return parseResponse(dir, body).map((r) => r.month);
       }),
