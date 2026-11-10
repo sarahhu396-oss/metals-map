@@ -33,12 +33,43 @@ html, body { margin: 0; height: 100%; }
 
 body {
   display: grid;
-  grid-template: "controls controls" auto "map panel" 1fr / 1fr 380px;
+  grid-template: "tabs tabs" auto "controls controls" auto "map panel" 1fr / 1fr 380px;
   background: var(--stage);
   color: var(--text);
   font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
   overflow: hidden;
 }
+
+#tabs {
+  grid-area: tabs;
+  display: flex;
+  gap: 4px;
+  padding: 6px 16px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+}
+#tabs button {
+  font: inherit;
+  color: var(--text-2);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+#tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
+
+#customers {
+  grid-area: 2 / 1 / -1 / -1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  background: var(--surface);
+}
+#customers[hidden] { display: none; }
+body[data-tab="customers"] #controls,
+body[data-tab="customers"] #map,
+body[data-tab="customers"] #panel { display: none; }
 
 #controls {
   grid-area: controls;
@@ -175,10 +206,11 @@ body {
 
 @media (max-width: 800px) {
   body {
-    grid-template: "controls" auto "map" 55vh "panel" auto / 1fr;
+    grid-template: "tabs" auto "controls" auto "map" 55vh "panel" auto / 1fr;
     overflow: auto;
     height: auto;
   }
+  #customers { grid-area: auto; }
   #panel { border-left: 0; border-top: 1px solid var(--rule); overflow: visible; }
 }
 

@@ -9,7 +9,7 @@ export interface Dataset {
   months: string[];
 }
 
-async function getJson<T>(base: string, file: string): Promise<T> {
+export async function getJson<T>(base: string, file: string): Promise<T> {
   let res: Response;
   try {
     res = await fetch(base + file);
